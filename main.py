@@ -6,18 +6,24 @@ import logging
 import shelve
 import json
 import datetime
-
+import os
 #logging
 logging.basicConfig(level = logging.INFO, format = '%(asctime)s:%(levelname)s:%(name)s: %(message)s')
-logging.disable(logging.CRITICAL)
+logging.disable(logging.DEBUG)
+sep = '\\'
+
 
 #shelf to store data
-sh = shelve.open('shelf\\pic_commands')
-fg = shelve.open('shelf\\forbidden_groups')
-hp = shelve.open('shelf\\help')
-inf = shelve.open('shelf\\information')
+pc = shelve.open('shelf' + sep + 'pic_commands')
+fg = shelve.open('shelf' + sep + 'forbidden_groups')
+hp = shelve.open('shelf' + sep + 'help')
+inf = shelve.open('shelf' + 'information')
+
+
 
 dt = datetime.datetime
+order_open = False
+
 
 #subclass a bot
 class Kavic_Bot(Client):
@@ -26,24 +32,25 @@ class Kavic_Bot(Client):
         self.markAsRead(thread_id)'''
 
         M = message_object.text
-        M = M.lower()
+        
 
-        #if the message is not empty and in a forbidden group
+        #if the message is not empty and was sent in a forbidden group
         if M != None and (thread_id not in fg.keys()):
+            M = M.lower()
             if M.startswith('add ') or M.startswith('-a ') or M.startswith('-s ') or M.startswith('search '):
                 song_list = open('song_list.txt', 'a')
                 
                 num = 0
                 for title in M[M.find(' ') + 1:].split(','):
                     if title.startswith('https://www.youtube.com/'):
-                        song_list.write('\n' + title)
+                        song_list.write(title + '\n')
                         num = num + 1
                     else:
                         url = get_url_by_title(title)
                         if M.startswith('add ') or M.startswith('-a '):
                             song_list.write('\n' + url)
                         else:
-                            self.send(Message(text = url), thread_id = thread_id, thread_type = thread_type)
+                            self.send(Message(url), thread_id = thread_id, thread_type = thread_type)
                         num = num + 1
                 #num of sent songs
                 if M.startswith('add ') or M.startswith('-a '):
@@ -62,18 +69,19 @@ class Kavic_Bot(Client):
                 else:
                     File = open(r'README.txt', mode = 'r', encoding = 'utf-8')
                     r = File.read()
-                    self.send(Message(text = r), thread_id=thread_id, thread_type=thread_type)
+                    self.send(Message(r), thread_id=thread_id, thread_type=thread_type)
                     File.close()
                     
             #class sheet
             if M.startswith('課表'):
-                wb = openpyxl.open('Source\\class_sheet.xlsx')
+                wb = openpyxl.open('Source' + sep + 'class_sheet.xlsx')
                 sheet = wb.worksheets[0]
 
                 wkday = chr(ord('a') + dt.weekday(dt.now()))
 
                 #print class sheet 
-                self.send(Message(text = u'今 日 課 表'), thread_id=thread_id, thread_type=thread_type)
+                self.send(Message(u'今 日 課 表'), thread_id=thread_id, thread_type=thread_type)
+                
                 for i in range(1, 10):
                         
                     self.send(Message(text = (b'|   ' + sheet[wkday + str(i)].value.encode() + b'   |')), thread_id=thread_id, thread_type=thread_type)
@@ -81,8 +89,8 @@ class Kavic_Bot(Client):
                         self.send(Message(text = '---午休---'), thread_id=thread_id, thread_type=thread_type)
                                 
             #send specific pics    
-            if M in sh.keys():
-                self.sendLocalFiles('Source\\' + sh[M], thread_id=thread_id, thread_type=thread_type)
+            if M in pc.keys():
+                self.sendLocalFiles('Source' + sep + pc[M], thread_id=thread_id, thread_type=thread_type)
                 
             #洗頻
             if M == '洗頻攻擊':
@@ -93,12 +101,60 @@ class Kavic_Bot(Client):
                 for i in range(1, 10):
                     self.send(Message(s), thread_id = thread_id, thread_type = thread_type)
                         
-                self.sendLocalFiles('Source\\' + sh[M], thread_id=thread_id, thread_type=thread_type)
+                self.sendLocalFiles('Source' + sep + pc[M], thread_id=thread_id, thread_type=thread_type)
 
-            #stop listening
-            if M == 'leave' and author_id == self.uid:
-                self.sendLocalFiles('Source\\leaving.jpg', message = Message("I'm leaving..."), thread_id = thread_id, thread_type = thread_type)
-                self.stopListening()                            
+            
+            #點餐
+            if M.startswith('order'):
+
+                text_list = M.split()
+                if len(text_list) > 1:
+                    if text_list[1] == 'open' and author_id == self.uid:
+                        order_open = True
+                    
+                        self.send(Message(u'現正訂購 : ' + M.split()[2]), thread_id = thread_id, thread_type = thread_type)
+                        self.sendLocalFiles('Source\\' + pc[M], message = Message(u'品項:'), thread_id = thread_id, thread_type = thread_type)
+                        
+                    elif order_open:
+                        try:
+                            buyer = self.fetchUserInfo(author_id)
+                            product = text_list[1]
+                            num = text_list[2]
+                            money = text_list[3]
+
+                            l = open('Source' + sep + 'tem_list.txt', 'a')
+                            l.write(' '.join(buyer.last_name, buyer.first_name, product, num, money) + '\n')
+                        except:
+                            self.send(Message(u'輸入錯誤喔割:('), thread_id = thread_id, thread_type = thread_type)
+                    elif not order_open:
+                        self.send(Message(u'還沒開訂 哥'), thread_id = thread_id, thread_type = thread_type)
+                        
+                    elif text_list[1] == 'close' and author_id == self.uid:
+                        os.remove('Source' + sep + 'tem_list.txt')
+                        
+                else:
+                    self.send(Message(u'輸入錯誤喔割:('), thread_id = thread_id, thread_type = thread_type)
+                    
+            #system commands, only admin can use these
+            if author_id == self.uid:
+                '''
+                if M == 'update':
+                    
+                    pc.close()
+                    fg.close()
+                    inf.close()
+                    hp.close()
+
+                    pc = shelve.open('shelf\\pic_commands')
+                    fg = shelve.open('shelf\\forbidden_groups')
+                    hp = shelve.open('shelf\\help')
+                    inf = shelve.open('shelf\\information')
+                    print('updated successful')
+                '''
+                #stop listening
+                if M == 'leave':
+                    self.sendLocalFiles('Source' + sep + 'leaving.jpg', message = Message("I'm leaving..."), thread_id = thread_id, thread_type = thread_type)
+                    self.stopListening()                            
             
 #initialize cookies
 cookies = {}
@@ -119,4 +175,10 @@ client.listen()
 # Save the session again
 with open('session.json', 'w') as f:
     json.dump(client.getSession(), f)
+
+#close all shelve obj
+pc.close()
+fg.close()
+inf.close()
+hp.close()
     
