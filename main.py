@@ -17,7 +17,7 @@ sep = '\\'
 pc = shelve.open('shelf' + sep + 'pic_commands')
 fg = shelve.open('shelf' + sep + 'forbidden_groups')
 hp = shelve.open('shelf' + sep + 'help')
-inf = shelve.open('shelf' + 'information')
+inf = shelve.open('shelf' + sep + 'information')
 
 
 
