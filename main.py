@@ -1,15 +1,17 @@
 from fbchat import Client
 from fbchat.models import *
 from youtubeSearch import get_url_by_title
+#from models import *
 import openpyxl
 import logging
 import shelve
 import json
 import datetime
 import os
+
 #logging
 logging.basicConfig(level = logging.INFO, format = '%(asctime)s:%(levelname)s:%(name)s: %(message)s')
-logging.disable(logging.DEBUG)
+logging.disable(logging.INFO)
 sep = '\\'
 
 
@@ -22,11 +24,16 @@ inf = shelve.open('shelf' + sep + 'information')
 
 
 dt = datetime.datetime
-order_open = False
+
 
 
 #subclass a bot
 class Kavic_Bot(Client):
+
+    order_open = False
+
+    num_weekday = ['週 一', '週 二', '週 三', '週 四', '週 五']
+    
     def onMessage(self, author_id, message_object, thread_id, thread_type, **kwargs):
         '''self.markAsDelivered(thread_id, message_object.uid)
         self.markAsRead(thread_id)'''
@@ -36,27 +43,35 @@ class Kavic_Bot(Client):
 
         #if the message is not empty and was sent in a forbidden group
         if M != None and (thread_id not in fg.keys()):
+            
             M = M.lower()
-            if M.startswith('add ') or M.startswith('-a ') or M.startswith('-s ') or M.startswith('search '):
-                song_list = open('song_list.txt', 'a')
+            
+            if M.startswith('-a ') or M.startswith('add ') or M.startswith('-s ') or M.startswith('search ') or M.startswith('-d ') or M.startswith('delete '):
+                with open('song_list.txt', 'r') as song_list:
+                    l = song_list.read().split('\n')
                 
-                num = 0
+                num = len(l)
                 for title in M[M.find(' ') + 1:].split(','):
                     if title.startswith('https://www.youtube.com/'):
-                        song_list.write(title + '\n')
-                        num = num + 1
+                        l.append(title)
                     else:
                         url = get_url_by_title(title)
-                        if M.startswith('add ') or M.startswith('-a '):
-                            song_list.write('\n' + url)
-                        else:
+                        if M.startswith('-a ') or M.startswith('add '):
+                            l.append(url)
+                        elif M.startswith('-s ') or M.startswith('search '):
                             self.send(Message(url), thread_id = thread_id, thread_type = thread_type)
-                        num = num + 1
-                #num of sent songs
-                if M.startswith('add ') or M.startswith('-a '):
-                    self.send(Message(u'You點了 ' + str(num) + u' 首song(s) :)'), thread_id = thread_id, thread_type = thread_type)
+                        elif M.startswith('-d ') or M.startswith('delete '):
+                            l.remove(url)
+
+                with open('song_list.txt', 'w') as song_list:
+                    for line in l:
+                        song_list.write(line + '\n')
                         
-                     
+                #num of sent songs
+                if M.startswith('-a ') or M.startswith('add '):
+                    self.send(Message(u'You點了 ' + str(len(l) - num) + u' 首song(s) :)'), thread_id = thread_id, thread_type = thread_type)
+                if M.startswith('-d ') or M.startswith('delete '):
+                    self.send(Message(u'You刪了 ' + str(num - len(l)) + u' 首song(s) :('), thread_id = thread_id, thread_type = thread_type)
             #help message
             if M.startswith('-h') or M.startswith('help'):
                 logging.debug('help received')
@@ -64,7 +79,7 @@ class Kavic_Bot(Client):
                 #if there's something behind 'help', send something
                 if len(M.split(' ')) > 1:
                     print('hi')
-                    self.sendLocalFiles('Source\\' + hp[M.split(' ')[1]], thread_id=thread_id, thread_type=thread_type) 
+                    self.sendLocalFiles('Source' + sep + hp[M.split(' ')[1]], thread_id=thread_id, thread_type=thread_type) 
                     
                 else:
                     File = open(r'README.txt', mode = 'r', encoding = 'utf-8')
@@ -76,18 +91,22 @@ class Kavic_Bot(Client):
             if M.startswith('課表'):
                 wb = openpyxl.open('Source' + sep + 'class_sheet.xlsx')
                 sheet = wb.worksheets[0]
-
-                wkday = chr(ord('a') + dt.weekday(dt.now()))
-
-                #print class sheet 
-                self.send(Message(u'今 日 課 表'), thread_id=thread_id, thread_type=thread_type)
+                if len(M.split()) > 1:
+                    wkday = int(M.split()[1]) - 1
+                    self.send(Message(self.num_weekday[wkday] + ' 課 表'), thread_id = thread_id, thread_type = thread_type)
+                else:
+                    wkday = dt.weekday(dt.now())
+                    self.send(Message(u'今 日 課 表'), thread_id = thread_id, thread_type = thread_type)
                 
-                for i in range(1, 10):
+                if wkday < 6:
+                
+                    for c in range(1, 10):
                         
-                    self.send(Message(text = (b'|   ' + sheet[wkday + str(i)].value.encode() + b'   |')), thread_id=thread_id, thread_type=thread_type)
-                    if i == 4:
-                        self.send(Message(text = '---午休---'), thread_id=thread_id, thread_type=thread_type)
-                                
+                        self.send(Message(text = (b'|   ' + sheet[chr(ord('a') + wkday) + str(c)].value.encode() + b'   |')), thread_id=thread_id, thread_type=thread_type)
+                        if c == 4:
+                            self.send(Message(text = '---午休---'), thread_id=thread_id, thread_type=thread_type)
+                else:
+                    self.sendRemoteFiles('https://www.google.com/url?sa=i&url=https%3A%2F%2Fmemes.tw%2Fimage%2F1210&psig=AOvVaw3fXLPUvDLlShStESadX5QL&ust=1616410947407000&source=images&cd=vfe&ved=0CAIQjRxqFwoTCJDCwJWewe8CFQAAAAAdAAAAABAD', thread_id = thread_id, thread_type = thread_type)
             #send specific pics    
             if M in pc.keys():
                 self.sendLocalFiles('Source' + sep + pc[M], thread_id=thread_id, thread_type=thread_type)
@@ -105,35 +124,57 @@ class Kavic_Bot(Client):
 
             
             #點餐
-            if M.startswith('order'):
+            if M.startswith('o '):
 
                 text_list = M.split()
-                if len(text_list) > 1:
-                    if text_list[1] == 'open' and author_id == self.uid:
-                        order_open = True
+                #check whether the command format is right or not
+                if len(text_list) > 1 and len(text_list) < 5:
+                    #order commands that only admin can use
+                    if author_id == self.uid:
+                        if text_list[1] == 'open':
+                            self.order_open = True
                     
-                        self.send(Message(u'現正訂購 : ' + M.split()[2]), thread_id = thread_id, thread_type = thread_type)
-                        self.sendLocalFiles('Source\\' + pc[M], message = Message(u'品項:'), thread_id = thread_id, thread_type = thread_type)
-                        
-                    elif order_open:
+                            self.send(Message(u'現正訂購 : ' + M.split()[2]), thread_id = thread_id, thread_type = thread_type)
+                            self.sendLocalFiles('Source' + sep + pc[text_list[2]], message = Message(u'品項:'), thread_id = thread_id, thread_type = thread_type)
+                            self.send(Message(u'點餐格式 : o <品名+細項> <數量> <價錢>'), thread_id = thread_id, thread_type = thread_type)
+                        elif text_list[1] == 'total':
+                            with open('Source' + sep + 'tem_list.txt', 'r') as File:
+                                l = File.read().split('\n')
+                                l.sort()
+                                print('---order total---')
+                                for order in l:
+                                    print(order)
+                                print('---order total---')
+                                
+                        elif text_list[1] == 'close':
+                            try:
+                                os.remove('Source' + sep + 'tem_list.txt')
+                            except:
+                                print('list has been removed')
+                            finally:
+                                self.send(Message(u'關閉點餐...'), thread_id = thread_id, thread_type = thread_type)
+                    #order is open, customer start to order
+                    elif self.order_open:
                         try:
-                            buyer = self.fetchUserInfo(author_id)
+                            buyer = (self.fetchUserInfo(author_id))[author_id]
                             product = text_list[1]
                             num = text_list[2]
                             money = text_list[3]
 
-                            l = open('Source' + sep + 'tem_list.txt', 'a')
-                            l.write(' '.join(buyer.last_name, buyer.first_name, product, num, money) + '\n')
+                            print(buyer.last_name, buyer.first_name)
+                        
+                            with open('Source' + sep + 'tem_list.txt', 'ab') as File:
+                                File.write(' '.join([buyer.first_name, product, num + '份', money + '元', '\n']).encode('utf-8'))
+                                self.send(Message(u'點餐成功:)'), thread_id = thread_id, thread_type = thread_type)
                         except:
                             self.send(Message(u'輸入錯誤喔割:('), thread_id = thread_id, thread_type = thread_type)
-                    elif not order_open:
+                    #order not open
+                    elif not self.order_open:
                         self.send(Message(u'還沒開訂 哥'), thread_id = thread_id, thread_type = thread_type)
-                        
-                    elif text_list[1] == 'close' and author_id == self.uid:
-                        os.remove('Source' + sep + 'tem_list.txt')
+                    
                         
                 else:
-                    self.send(Message(u'輸入錯誤喔割:('), thread_id = thread_id, thread_type = thread_type)
+                    self.send(Message(u'輸入錯誤喔ㄍ:('), thread_id = thread_id, thread_type = thread_type)
                     
             #system commands, only admin can use these
             if author_id == self.uid:
