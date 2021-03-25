@@ -1,6 +1,7 @@
 from fbchat import Client
 from fbchat.models import *
 from youtubeSearch import get_url_by_title
+from total import *
 #from models import *
 import openpyxl
 import logging
@@ -8,6 +9,7 @@ import shelve
 import json
 import datetime
 import os
+
 
 #logging
 logging.basicConfig(level = logging.INFO, format = '%(asctime)s:%(levelname)s:%(name)s: %(message)s')
@@ -35,8 +37,10 @@ class Kavic_Bot(Client):
 
     
     def onMessage(self, author_id, message_object, thread_id, thread_type, **kwargs):
-        '''self.markAsDelivered(thread_id, message_object.uid)
-        self.markAsRead(thread_id)'''
+        '''
+        self.markAsDelivered(thread_id, message_object.uid)
+        self.markAsRead(thread_id)
+        '''
 
         M = message_object.text
         
@@ -47,7 +51,7 @@ class Kavic_Bot(Client):
             M = M.lower()
             
             if M.startswith('-a ') or M.startswith('add ') or M.startswith('-s ') or M.startswith('search ') or M.startswith('-d ') or M.startswith('delete '):
-                with open('song_list.txt', 'r') as song_list:
+                with open('list' + sep + 'song_list.txt', 'r') as song_list:
                     l = song_list.read().split('\n')
                 
                 num = len(l)
@@ -63,7 +67,7 @@ class Kavic_Bot(Client):
                         elif M.startswith('-d ') or M.startswith('delete '):
                             l.remove(url)
 
-                with open('song_list.txt', 'w') as song_list:
+                with open('song_list.txt', 'w', encoding = 'utf-8') as song_list:
                     for line in l:
                         song_list.write('\n' + line)
                         
@@ -142,50 +146,43 @@ class Kavic_Bot(Client):
                             self.sendLocalFiles('Source' + sep + 'shop' + sep + pc[shop_name], message = Message(u'品項:'), thread_id = thread_id, thread_type = thread_type)
                             self.send(Message(u'點餐格式 : o <品名+細項> <數量> <價錢>'), thread_id = thread_id, thread_type = thread_type)
                             self.now_shop.append(shop_name)
+                            
                         elif text_list[1] == 'total':
-                            with open('tem_list.txt', 'rb') as File:
-                                l = File.read().split(b'\n')
-                                l.sort()
-                                print('---order total---')
-                                for order in l:
-                                    print(order.decode())
-                                print('---order total---')
+                            list_total()
                                 
                         elif text_list[1] == 'close':
                             if len(text_list) == 2:
                                 try:
-                                    self.now_shop.clear()
-                                    
-                                    with open('tem_list.txt', 'rb') as File:
-                                        l = File.read().split(b'\n')
-                                        l.sort()
-                                    print('---order total---')
-                                    for order in l:
-                                        print(order.decode())
-                                    print('---order total---')
-                                    
-                                    os.remove('tem_list.txt')
+                                    list_total()
+                                    os.remove('list' + sep + 'record_list.txt')
                                 except:
                                     print('list has been removed')
                                 finally:
                                     self.send(Message(u'關閉點餐...'), thread_id = thread_id, thread_type = thread_type)
+                                    self.now_shop.clear()
+                                    self.order_open = False
                             '''
                             else:
                                 self.now_shop.remove(M.split(' ', 2)[2])
                                 self.send(Message('已停止訂購' + M.split(' ', 2)[2]), thread_id = thread_id, thread_type = thread_type)
                             '''
+                        elif text_list[1] == 'check':
+                            try:
+                                with open('list' + sep + 'final_list.txt', encoding = 'utf-8') as fl:
+                                    flr = fl.read()
+                                    self.send(Message(flr), thread_id = thread_id, thread_type = thread_type)
+                            except:
+                                print('something wrong when opening the file "final_list.txt"')
                     #order is open, customer start to order
                     elif self.order_open and len(text_list) == 4:
                         try:
                             buyer = (self.fetchUserInfo(author_id))[author_id]
-                            product = text_list[1]
-                            num = text_list[2]
-                            money = text_list[3]
+                            product, num, money = text_list[1:]
 
-                            print(buyer.first_name)
+                            print(buyer.first_name, 'check!')
                         
-                            with open('tem_list.txt', 'ab') as File:
-                                File.write(' '.join([buyer.first_name, product, num + '份', money + '元', '\n']).encode('utf-8'))
+                            with open('list' + sep + 'record_list.txt', 'a', encoding = 'utf-8') as File:
+                                File.write(' '.join([buyer.first_name, product, num + '份', money + '元', '\n']))
                                 self.send(Message(u'點餐成功:)'), thread_id = thread_id, thread_type = thread_type)
                         except:
                             self.send(Message(u'輸入錯誤喔割:('), thread_id = thread_id, thread_type = thread_type)
