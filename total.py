@@ -7,11 +7,12 @@ def take_product_name(order):
     
 
 def list_total():
-    with open('list' + sep + 'record_list.txt', encoding = 'utf-8') as rl, open('list' + sep + 'list_for_order.txt', 'w', encoding = 'utf-8') as lfo,\
-         open('list' + sep + 'final_list.txt', 'w', encoding = 'utf-8') as fl:
+    with open('list' + sep + 'record_list.txt', 'r', encoding = 'utf-8') as rl, open('list' + sep + 'list_for_order.txt', 'w', encoding = 'utf-8') as lfo,\
+         open('list' + sep + 'final_list.txt', 'w', encoding = 'utf-8') as fl, open('list' + sep + 'name_list.txt', 'w', encoding = 'utf-8') as nl:
         
         lread = rl.read().split('\n')
-        lread.remove('')
+        while '' in lread:
+            lread.remove('')
         print(lread)
         lread.sort(key = take_product_name)
         ord_dic = {}
@@ -39,10 +40,22 @@ def list_total():
                 else:
                     cus_dic[name][product][0] += num
                     cus_dic[name][product][1] += cost
-            
+        tem_list = []
+        
         for key in ord_dic.keys():
-            lfo.write(key + ' ' + str(ord_dic[key][0]) + '份 ' + str(ord_dic[key][1]) + '元' + '\n')
+            
+            if len(key) > 6:
+                tem_list.append(key)
+            else:
+                lfo.write(key + ' ' + str(ord_dic[key][0]) + '份 ' + str(ord_dic[key][1]) + '元' + '\n')
+        lfo.write('--------\n')
+        for item in tem_list:
+            lfo.write(item + ' ' + str(ord_dic[item][0]) + '份 ' + str(ord_dic[item][1]) + '元' + '\n')
 
+        for key in cus_dic.keys():
+            for product in cus_dic[key].keys():
+                if len(product) > 6:
+                    nl.write(' '.join([key, str(cus_dic[key][product][0]*5) + '元', '\n-----\n']))
         total = 0
         for key in cus_dic.keys():
             fl.write(key + ':\n')
@@ -53,7 +66,5 @@ def list_total():
             total += personal_total
             fl.write('共' + str(personal_total) + '元\n-----\n')
 
-
-
-
+        print(total)
     

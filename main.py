@@ -2,13 +2,15 @@ from fbchat import Client
 from fbchat.models import *
 from youtubeSearch import get_url_by_title
 from total import *
-#from models import *
+from models import *
 import openpyxl
 import logging
 import shelve
 import json
 import datetime
 import os
+from getpass import getpass
+
 
 
 #logging
@@ -17,15 +19,12 @@ logging.disable(logging.INFO)
 sep = '\\'
 
 
-#shelf to store data
-pc = shelve.open('shelf' + sep + 'pic_commands')
-fg = shelve.open('shelf' + sep + 'forbidden_groups')
-hp = shelve.open('shelf' + sep + 'help')
-inf = shelve.open('shelf' + sep + 'information')
+
 
 
 
 dt = datetime.datetime
+
 
 
 
@@ -35,6 +34,10 @@ class Kavic_Bot(Client):
     order_open = False
     now_shop = []
 
+    #shelf to store data
+    pc = shelve.open('shelf' + sep + 'pic_commands')
+    fg = shelve.open('shelf' + sep + 'forbidden_groups')
+    hp = shelve.open('shelf' + sep + 'help')
     
     def onMessage(self, author_id, message_object, thread_id, thread_type, **kwargs):
         '''
@@ -46,7 +49,7 @@ class Kavic_Bot(Client):
         
 
         #if the message is not empty and was sent in a forbidden group
-        if M != None and (thread_id not in fg.keys()):
+        if M != None and (thread_id not in self.fg.keys()) and (author_id not in self.fg.keys()) :
             
             M = M.lower()
             
@@ -64,18 +67,20 @@ class Kavic_Bot(Client):
                             l.append(url)
                         elif M.startswith('-s ') or M.startswith('search '):
                             self.send(Message(url), thread_id = thread_id, thread_type = thread_type)
-                        elif M.startswith('-d ') or M.startswith('delete '):
+                        elif M.startswith('-d ') or M.startswith('delete ') and only_for_admin(self.uid, author_id):
                             l.remove(url)
 
-                with open('song_list.txt', 'w', encoding = 'utf-8') as song_list:
+                with open('list' + sep + 'song_list.txt', 'w', encoding = 'utf-8') as song_list:
                     for line in l:
-                        song_list.write('\n' + line)
+                        song_list.write(line + '\n')
                         
-                #num of sent songs
+                #num of sent songs or deleted songs
                 if M.startswith('-a ') or M.startswith('add '):
                     self.send(Message(u'You點了 ' + str(len(l) - num) + u' 首song(s) :)'), thread_id = thread_id, thread_type = thread_type)
                 if M.startswith('-d ') or M.startswith('delete '):
                     self.send(Message(u'You刪了 ' + str(num - len(l)) + u' 首song(s) :('), thread_id = thread_id, thread_type = thread_type)
+
+                    
             #help message
             if M.startswith('-h') or M.startswith('help'):
                 logging.debug('help received')
@@ -83,7 +88,7 @@ class Kavic_Bot(Client):
                 #if there's something behind 'help', send something
                 if len(M.split(' ')) > 1:
                     print('hi')
-                    self.sendLocalFiles('Source' + sep + hp[M.split(' ')[1]], thread_id=thread_id, thread_type=thread_type) 
+                    self.sendLocalFiles('Source' + sep + self.hp[M.split(' ')[1]], thread_id=thread_id, thread_type=thread_type) 
                     
                 else:
                     File = open(r'README.txt', mode = 'r', encoding = 'utf-8')
@@ -96,7 +101,7 @@ class Kavic_Bot(Client):
                 wb = openpyxl.open('Source' + sep + 'class_sheet.xlsx')
                 sheet = wb.worksheets[0]
 
-                num_weekday = ['週 一', '週 二', '週 三', '週 四', '週 五']
+                num_weekday = ('週 一', '週 二', '週 三', '週 四', '週 五', '週六', '週日')
                 
                 if len(M.split()) > 1:
                     wkday = int(M.split()[1]) - 1
@@ -104,8 +109,9 @@ class Kavic_Bot(Client):
                 else:
                     wkday = dt.weekday(dt.now())
                     self.send(Message(u'今 日 課 表'), thread_id = thread_id, thread_type = thread_type)
-                
-                if wkday < 6:
+
+                #if the day asked is a normal day, send class sheet
+                if wkday < 5:
                 
                     for c in range(1, 10):
                         
@@ -113,13 +119,16 @@ class Kavic_Bot(Client):
                         if c == 4:
                             self.send(Message(text = '---午休---'), thread_id=thread_id, thread_type=thread_type)
                 else:
-                    self.sendRemoteFiles('https://www.google.com/url?sa=i&url=https%3A%2F%2Fmemes.tw%2Fimage%2F1210&psig=AOvVaw3fXLPUvDLlShStESadX5QL&ust=1616410947407000&source=images&cd=vfe&ved=0CAIQjRxqFwoTCJDCwJWewe8CFQAAAAAdAAAAABAD', thread_id = thread_id, thread_type = thread_type)
+                    self.sendLocalFiles('Source' + sep + 'no.png', thread_id = thread_id, thread_type = thread_type)
+                    
             #send specific pics    
-            if M in pc.keys():
-                self.sendLocalFiles('Source' + sep + pc[M], thread_id=thread_id, thread_type=thread_type)
-                
+            if M in self.pc.keys():
+                try:
+                    self.sendLocalFiles('Source' + sep + self.pc[M], thread_id=thread_id, thread_type=thread_type)
+                except:
+                    print('pic not found, it\'s ok maybe')
             #洗頻
-            if M == '洗頻攻擊':
+            if M == '洗頻攻擊' and only_for_admin(self.uid, author_id):
                 s = ''
                 for i in range(1, 100):
                     s += u'這是洗頻攻擊\n\n∑(っ°Д °;)っ\n\n'
@@ -127,7 +136,7 @@ class Kavic_Bot(Client):
                 for i in range(1, 10):
                     self.send(Message(s), thread_id = thread_id, thread_type = thread_type)
                         
-                self.sendLocalFiles('Source' + sep + pc[M], thread_id=thread_id, thread_type=thread_type)
+                self.sendLocalFiles('Source' + sep + self.pc[M], thread_id=thread_id, thread_type=thread_type)
 
             
             #點餐
@@ -137,13 +146,13 @@ class Kavic_Bot(Client):
                 #check whether the command format is right or not
                 if len(text_list) > 1 :#and len(text_list) < 5:
                     #order commands that only admin can use
-                    if author_id == self.uid:
+                    if only_for_admin(self.uid, author_id):
                         if text_list[1] == 'open':
                             self.order_open = True
                             shop_name = M.split(' ', 2)[2]
                     
                             self.send(Message(u'現正訂購 : ' + shop_name), thread_id = thread_id, thread_type = thread_type)
-                            self.sendLocalFiles('Source' + sep + 'shop' + sep + pc[shop_name], message = Message(u'品項:'), thread_id = thread_id, thread_type = thread_type)
+                            self.sendLocalFiles('Source' + sep + 'shop' + sep + self.pc[shop_name], message = Message(u'品項:'), thread_id = thread_id, thread_type = thread_type)
                             self.send(Message(u'點餐格式 : o <品名+細項> <數量> <價錢>'), thread_id = thread_id, thread_type = thread_type)
                             self.now_shop.append(shop_name)
                             
@@ -151,7 +160,7 @@ class Kavic_Bot(Client):
                             list_total()
                                 
                         elif text_list[1] == 'close':
-                            if len(text_list) == 2:
+                            if self.order_open:
                                 try:
                                     list_total()
                                     os.remove('list' + sep + 'record_list.txt')
@@ -161,6 +170,8 @@ class Kavic_Bot(Client):
                                     self.send(Message(u'關閉點餐...'), thread_id = thread_id, thread_type = thread_type)
                                     self.now_shop.clear()
                                     self.order_open = False
+                            else:
+                                print('not open yet')
                             '''
                             else:
                                 self.now_shop.remove(M.split(' ', 2)[2])
@@ -180,7 +191,8 @@ class Kavic_Bot(Client):
                             product, num, money = text_list[1:]
 
                             print(buyer.first_name, 'check!')
-                        
+
+                            
                             with open('list' + sep + 'record_list.txt', 'a', encoding = 'utf-8') as File:
                                 File.write(' '.join([buyer.first_name, product, num + '份', money + '元', '\n']))
                                 self.send(Message(u'點餐成功:)'), thread_id = thread_id, thread_type = thread_type)
@@ -197,32 +209,39 @@ class Kavic_Bot(Client):
                     
             #send menu pic
             if M.startswith('菜單') or M.startswith('menu'):
-                self.send(Message(u'現正訂購:'), thread_id = thread_id, thread_type = thread_type)
-                for shop in self.now_shop:
-                    self.sendLocalFiles('Source' + sep + 'shop' + sep + pc[shop], message = Message(shop), thread_id = thread_id, thread_type = thread_type)
+                if self.order_open:
+                    self.send(Message(u'現正訂購:'), thread_id = thread_id, thread_type = thread_type)
+                    for shop in self.now_shop:
+                        self.sendLocalFiles('Source' + sep + 'shop' + sep + self.pc[shop], message = Message(shop), thread_id = thread_id, thread_type = thread_type)
+                else:
+                    self.send(Message('not opennnn'), thread_id = thread_id, thread_type = thread_type)
 
-                    
+            if only_for_admin(self.uid, author_id): 
             #system commands, only admin can use these
-            if author_id == self.uid:
-                '''
+                
                 if M == 'update':
-                    
-                    pc.close()
-                    fg.close()
-                    inf.close()
-                    hp.close()
 
-                    pc = shelve.open('shelf\\pic_commands')
-                    fg = shelve.open('shelf\\forbidden_groups')
-                    hp = shelve.open('shelf\\help')
-                    inf = shelve.open('shelf\\information')
+                    self.pc.close()
+                    self.fg.close()
+                    self.hp.close()
+
+                    self.pc = shelve.open('shelf' + sep + 'pic_commands')
+                    self.fg = shelve.open('shelf' + sep + 'forbidden_groups')
+                    self.hp = shelve.open('shelf' + sep +'help')
+                    
                     print('updated successful')
-                '''
-                #stop listening
+                
+                    #stop listening
                 if M == 'leave':
                     self.sendLocalFiles('Source' + sep + 'leaving.jpg', message = Message("I'm leaving..."), thread_id = thread_id, thread_type = thread_type)
-                    self.stopListening()                            
-            
+                    self.stopListening()
+                    
+        #for 歐鎮源
+        #if author_id == '100042346155061':
+            #self.sendLocalFiles('Source' + sep + 'asshole.jpg', thread_id=thread_id, thread_type=thread_type)
+                
+#-----------------------------------------------------------------------
+                
 #initialize cookies
 cookies = {}
 try:
@@ -234,7 +253,7 @@ except:
     pass
 
 #connect bot
-client = Kavic_Bot(inf['email'], inf['password'], session_cookies=cookies)
+client = Kavic_Bot(getpass('Enter email:'), getpass('enter password:'), session_cookies=cookies)
 print('----STARTING SUCCEED----')
 client.listen()
 
@@ -244,8 +263,7 @@ with open('session.json', 'w') as f:
     json.dump(client.getSession(), f)
 
 #close all shelve obj
-pc.close()
-fg.close()
-inf.close()
-hp.close()
+client.pc.close()
+client.fg.close()
+client.hp.close()
     
