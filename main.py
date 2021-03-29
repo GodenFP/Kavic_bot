@@ -1,7 +1,7 @@
 from fbchat import Client
 from fbchat.models import *
 
-from total import *
+from calc_total import *
 from models import *
 from youtubePlaylist import *
 
@@ -27,7 +27,9 @@ class Kavic_Bot(Client):
     pc = shelve.open('shelf' + sep + 'pic_commands')
     fg = shelve.open('shelf' + sep + 'forbidden_groups')
     hp = shelve.open('shelf' + sep + 'help')
+
     
+    ###onMessage function
     def onMessage(self, author_id, message_object, thread_id, thread_type, **kwargs):
         '''
         self.markAsDelivered(thread_id, message_object.uid)
@@ -46,15 +48,18 @@ class Kavic_Bot(Client):
             
             M = M.lower()
 
-            #song command
+            ###song command
             if check_song_related(M):
                 for text in song_options(M):
                     self.send(Message(text), tid, ttp)
 
             if M == 'song list':
                 self.send(Message('https://www.youtube.com/playlist?list=PLQu61FekieSStFTy3f3YIEvBy7xo2Yqho'), tid, ttp)
+
+            if M == 'update song list' and only_for_admin(self.uid, author_id):
+                update_song_list()
             
-            #help message
+            ###help message
             if M.startswith('-h') or M.startswith('help'):
                 logging.debug('help received')
 
@@ -69,18 +74,18 @@ class Kavic_Bot(Client):
                         self.send(Message(r_help), tid, ttp)
                     
                     
-            #class sheet
+            ###class sheet
             if M.startswith('課表'):
                 class_sheet(M, self, tid, ttp)
                     
-            #send specific pics    
+            ###send specific pics    
             if M in self.pc.keys():
                 try:
                     self.sendLocalFiles('Source' + sep + self.pc[M], None, tid, ttp)
                 except:
                     print('pic not found, it\'s ok maybe')
             
-            #洗頻
+            ###洗頻
             if M == '洗頻攻擊' and only_for_admin(self.uid, author_id):
                 s = ''
                 for i in range(1, 100):
@@ -92,7 +97,7 @@ class Kavic_Bot(Client):
                 self.sendLocalFiles('Source' + sep + self.pc[M], None, tid, ttp)
 
 #---------------------------order---------------------------           
-            #點餐
+            ###點餐
             if M.startswith('o '):
                 
                 if only_for_admin(self.uid, author_id):
@@ -100,45 +105,56 @@ class Kavic_Bot(Client):
                     command = M.split()[1]
                     
                     if command == 'open':
+                        #remove last record
+                        try:
+                            os.remove('list' + sep + 'record_list.txt')
+                        except:
+                            print('list has been removed')
+                            
+                        #order is open, collect shop name
                         self.order_open = True
                         shop_name = M.split(' ', 2)[2]
-                    
+
+                        #send order information
                         self.send(Message(u'現正訂購 : ' + shop_name), tid, ttp)
                         self.sendLocalFiles('Source' + sep + 'shop' + sep + self.pc[shop_name], Message('品項:'), tid, ttp)
                         self.send(Message('點餐格式 : o <品名+細項> <數量> <價錢>'), tid, ttp)
+
+                        #add shop
                         self.now_shop.append(shop_name)
                          
                     elif command == 'close':
                         if self.order_open:
-                            try:
-                                list_total()
-                                os.remove('list' + sep + 'record_list.txt')
-                            except:
-                                print('list has been removed')
-                            finally:
-                                self.send(Message(u'關閉點餐...'), tid, ttp)
-                                self.now_shop.clear()
-                                self.order_open = False
+                            #choose which type to calc
+                            if len(self.now_shop) > 1:
+                                calc_food_and_drink()
+                            else:
+                                calc_only_one_shop()
+
+                            self.send(Message(u'關閉點餐...'), tid, ttp)
+                            self.now_shop.clear()
+                            self.order_open = False
                         else:
-                            print('not open yet')
+                            print('can\'t close, not open yet.')
                             
                     elif command == 'check':
                         try:
-                            with open('list' + sep + 'final_list.txt', encoding = 'utf-8') as fl:
-                                flr = fl.read()
-                                self.send(Message(flr), tid, ttp)
+                            with open('list' + sep + 'who_buy_what_list.txt', encoding = 'utf-8') as wbwl:
+                                lread = wbwl.read()
+                                self.send(Message(lread), tid, ttp)
                         except:
-                            print('something wrong when opening the file "final_list.txt"')
+                            print('something wrong when opening the file "who_buy_what_list.txt"')
                             
+                    '''       
                     elif command == 'total':
                         list_total()
-
-                    elif command == 'help':
+                    '''
+                elif M.split()[1] == 'help':
                         self.send(Message(u'點餐格式 : o <品名+細項> <數量> <價錢>'), tid, ttp)
                 
                 elif self.order_open:
                     #order is open, receive order
-                    for_order(M, self, tid, ttp, author_id)
+                    order_something(M, self, tid, ttp, author_id)
 
                 #if order not open
                 elif not self.order_open:
@@ -157,7 +173,7 @@ class Kavic_Bot(Client):
                     self.send(Message('not opennnnnnn'), tid, ttp)
 #---------------------------order---------------------------
                 
-            #system commands, only admin can use these 
+            ###system commands, only admin can use these 
             if only_for_admin(self.uid, author_id):
 
                 #update shelf

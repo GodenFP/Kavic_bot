@@ -19,21 +19,23 @@ os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 api_service_name = "youtube"
 api_version = "v3"
 client_secrets_file = "client_secret_427484376462-65dei1asn0agbi847s415thvi41i678b.apps.googleusercontent.com.json"
-plid = 'PLQu61FekieSThVXZnWG7cLq2JRoOrBliX'#"PLQu61FekieSStFTy3f3YIEvBy7xo2Yqho"
+plid = "PLQu61FekieSStFTy3f3YIEvBy7xo2Yqho"
 
-# Get credentials and create an API client
-flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-        client_secrets_file, scopes)
+def init():
+    # Get credentials and create an API client
+    flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+            client_secrets_file, scopes)
     
-credentials = flow.run_console()
+    credentials = flow.run_console()
     
-youtube = googleapiclient.discovery.build(
-            api_service_name,
-            api_version,
-            credentials = credentials
-        )
+    youtube = googleapiclient.discovery.build(
+                api_service_name,
+                api_version,
+                credentials = credentials
+            )
+    return youtube
 
-def check_list():
+def check_list(youtube):
 
     request = youtube.playlistItems().list(
         part = "snippet,contentDetails",
@@ -44,7 +46,7 @@ def check_list():
     return response
     
 
-def add_song(vid):
+def add_song(youtube, vid):
 
     request = youtube.playlistItems().insert(
         part="snippet",
@@ -63,24 +65,24 @@ def add_song(vid):
 
     print(response)
 
-def delete_song(plit_id):
+def delete_song(youtube, plit_id):
     
     request = youtube.playlistItems().delete(
         id = plit_id
     )
     request.execute()
 
-def delete_five_songs():
+def delete_five_songs(youtube):
     try:
         items = check_list()['items']
         for item in items:
-            delete_song(item['id'])
+            delete_song(youtube, item['id'])
         
         print('update successful')
     except:
         print('something wrong when deleting songs')
         
-def add_five_songs():
+def add_five_songs(youtube):
     r = []
     with open('list\\song_list.txt', encoding = 'utf-8') as File:
         r = File.read().split('\n')
@@ -91,7 +93,7 @@ def add_five_songs():
             choice = random.choice(r)
             print(choice)
         
-            add_song(choice)
+            add_song(youtube, choice)
             r.remove(choice)
         
     with open('list\\song_list.txt', 'w', encoding = 'utf-8') as File:
@@ -99,9 +101,9 @@ def add_five_songs():
             File.write(line + '\n')
 
 def update_song_list():
-    delete_five_songs()
-    add_five_songs()
+    youtube = init()
+    
+    delete_five_songs(youtube)
+    add_five_songs(youtube)
 
-
-            
 

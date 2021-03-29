@@ -1,5 +1,5 @@
 kavicㄐㄐ雞雞人 
-beta v:1.1.3
+beta v:1.1.4
 *bug 注意*
 
 <<一般指令>>
@@ -11,9 +11,11 @@ search, -s : YT關鍵字搜尋, 用法同add
 ---
 delete : 刪歌, 用法同add
 ---
-song list : 查看歌單
+歌單, song list : 查看歌單
 =====
 o : 點餐(測試中)
+---
+o help : 查看點餐格式
 ---
 菜單, menu : 查看現正訂購
 =====

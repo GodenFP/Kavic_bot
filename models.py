@@ -39,7 +39,7 @@ def song_options(M):
                 l.append(url)
             elif M.startswith('-s ') or M.startswith('search '):
                 text.append(url)
-            elif M.startswith('-d ') or M.startswith('delete ') and only_for_admin(self.uid, author_id):
+            elif M.startswith('-d ') or M.startswith('delete '):
                 l.remove(url)
 
     with open('list' + sep + 'song_list.txt', 'w', encoding = 'utf-8') as song_list:
@@ -84,7 +84,7 @@ def class_sheet(M, client, tid, ttp):
         client.sendLocalFiles('Source' + sep + 'no.png', None, tid, ttp)
 
         
-def for_order(M, client, tid, ttp, author_id):             
+def order_something(M, client, tid, ttp, author_id):             
                                 
     #order is open, customer start to order
     try:
@@ -96,9 +96,9 @@ def for_order(M, client, tid, ttp, author_id):
                             
         with open('list' + sep + 'record_list.txt', 'a', encoding = 'utf-8') as File:
             File.write(' '.join([buyer.first_name, product, num + '份', money + '元', '\n']))
-        self.send(Message('點餐成功:)'), tid, ttp)
+        client.send(Message('點餐成功:)'), tid, ttp)
     except:
-        self.send(Message('輸入錯誤喔割:('), tid, ttp)
+        client.send(Message('輸入錯誤喔割:('), tid, ttp)
 
 
                     
