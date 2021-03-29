@@ -25,8 +25,10 @@ def get_url_by_title(target):
     # Get credentials and create an API client
     
     youtube = googleapiclient.discovery.build(
-        api_service_name, api_version,
-        developerKey = 'AIzaSyCSuQE5KLziIu9kmFr2TcRkujXsPhHPjXU')
+        api_service_name,
+        api_version,
+        developerKey = 'AIzaSyCSuQE5KLziIu9kmFr2TcRkujXsPhHPjXU'
+    )
 
     request = youtube.search().list(
         part="snippet",
@@ -35,5 +37,5 @@ def get_url_by_title(target):
     )
     response = request.execute()
 
-    url = 'https://www.youtube.com/watch?v=' + response['items'][0]['id']['videoId']
+    url = response['items'][0]['id']['videoId']
     return url
