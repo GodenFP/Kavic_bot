@@ -3,7 +3,7 @@ from fbchat.models import *
 
 from calc_total import *
 from models import *
-from youtubePlaylist import *
+from yt.song_list_func import *
 
 import logging
 import shelve
@@ -15,7 +15,9 @@ from getpass import getpass
 #logging
 logging.basicConfig(level = logging.INFO, format = '%(asctime)s:%(levelname)s:%(name)s: %(message)s')
 logging.disable(logging.INFO)
-sep = '\\'
+
+with open('sep.txt', encoding = 'utf-8') as file:
+    sep = file.read()
 
 #subclass a bot
 class Kavic_Bot(Client):
@@ -53,11 +55,22 @@ class Kavic_Bot(Client):
                 for text in song_options(M):
                     self.send(Message(text), tid, ttp)
 
-            if M == 'song list':
+            if M == '歌單' or M == 'song list':
                 self.send(Message('https://www.youtube.com/playlist?list=PLQu61FekieSStFTy3f3YIEvBy7xo2Yqho'), tid, ttp)
 
-            if M == 'update song list' and only_for_admin(self.uid, author_id):
-                update_song_list()
+            if M.startswith('song list ') and only_for_admin(self.uid, author_id):
+                if len(M.split()) > 3:
+                    num = int(M.split()[3])
+                else:
+                    num = 5
+
+                choice = M.split()[2]
+                if choice == 'update':
+                    update_song_list(num)
+                elif choice == 'delete':
+                    delete_from_song_list(num)
+                elif choice == 'add':
+                    add_to_song_list(num)
             
             ###help message
             if M.startswith('-h') or M.startswith('help'):
@@ -145,10 +158,10 @@ class Kavic_Bot(Client):
                         except:
                             print('something wrong when opening the file "who_buy_what_list.txt"')
                             
-                    '''       
-                    elif command == 'total':
-                        list_total()
-                    '''
+                           
+                    elif command == 'relist':
+                        who_buy_what_list()
+                    
                 elif M.split()[1] == 'help':
                         self.send(Message(u'點餐格式 : o <品名+細項> <數量> <價錢>'), tid, ttp)
                 
@@ -204,20 +217,25 @@ class Kavic_Bot(Client):
 cookies = {}
 try:
     # Load the session cookies
-    with open('session.json', 'r') as f:
+    with open('personal_data' + sep + 'session.json', 'r') as f:
         cookies = json.load(f)
 except:
     # If it fails, never mind, we'll just login again
     pass
 
 #connect bot
-client = Kavic_Bot(getpass('Enter email:'), getpass('enter password:'), session_cookies=cookies)
+email = getpass('Enter email:')
+while '@' not in email:
+    print(' email wrong! ')
+password = getpass('Enter password:')
+
+client = Kavic_Bot(email, password, session_cookies=cookies)
 print('----STARTING SUCCEED----')
 client.listen()
 
 
 # Save the session again
-with open('session.json', 'w') as f:
+with open('personal_data' + sep + 'session.json', 'w') as f:
     json.dump(client.getSession(), f)
 
 #close all shelve obj

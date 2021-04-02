@@ -1,9 +1,12 @@
 import fbchat
 from fbchat.models import *
-from youtubeSearch import get_url_by_title
+from yt.song_list_func import get_url_by_title
 import openpyxl
 import datetime
-sep = '\\'
+
+with open('sep.txt', encoding = 'utf-8') as file:
+    sep = file.read()
+
 dt = datetime.datetime
 
 #=====================
@@ -31,10 +34,19 @@ def song_options(M):
     num = len(l)
     for title in M[M.find(' ') + 1:].split(','):
         if title.startswith('https://www.youtube.com/'):
+            if 'list' in title:
+                text.append('這是list喔:(')
+                return text
+            if title in l:
+                text.append('U人點過囉!')
+                return text
             l.append(title)
         elif title != '':
             url = get_url_by_title(title)
-                
+            if url in l:
+                text.append('U人點過囉!')
+                return text
+            
             if M.startswith('-a ') or M.startswith('add '):
                 l.append(url)
             elif M.startswith('-s ') or M.startswith('search '):

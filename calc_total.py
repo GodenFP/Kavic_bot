@@ -1,6 +1,6 @@
 
-
-sep = '\\'
+with open('sep.txt', encoding = 'utf-8') as file:
+    sep = file.read()
 product_num_cost = {}
 name_product = {}
 
@@ -121,6 +121,4 @@ def calc_only_one_shop():
         print('something wrong when collecting order information.')
     order_list_for_one_shop()
     who_buy_what_list()
-
-
 
