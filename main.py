@@ -224,10 +224,10 @@ except:
     pass
 
 #connect bot
-email = getpass('Enter email:')
-while '@' not in email:
-    print(' email wrong! ')
-password = getpass('Enter password:')
+with open('personal_data' + sep + 'email') as Email,\
+     open('personal_data' + sep + 'password') as Password:
+    email = Email.read()
+    password = Password.read()
 
 client = Kavic_Bot(email, password, session_cookies=cookies)
 print('----STARTING SUCCEED----')
