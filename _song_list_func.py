@@ -20,7 +20,7 @@ os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 api_service_name = "youtube"
 api_version = "v3"
-client_secrets_file = "yt" + sep + "client_secret_427484376462-65dei1asn0agbi847s415thvi41i678b.apps.googleusercontent.com.json"
+client_secrets_file = "Data" + sep + "personal_data" + sep + "client_secret_427484376462-65dei1asn0agbi847s415thvi41i678b.apps.googleusercontent.com.json"
 plid = "PLQu61FekieSStFTy3f3YIEvBy7xo2Yqho"
 
 def init():
@@ -40,7 +40,7 @@ def init():
             )
     return youtube
 
-def check_list(youtube, num):
+def check_song_list(youtube, num):
 
     request = youtube.playlistItems().list(
         part = "snippet,contentDetails",
@@ -98,7 +98,7 @@ def get_url_by_title(target):
 
 def delete_num_songs(youtube, num):
     try:
-        items = check_list(youtube, num)['items']
+        items = check_song_list(youtube, num)['items']
         for item in items:
             delete_song(youtube, item['id'])
         
@@ -108,7 +108,7 @@ def delete_num_songs(youtube, num):
         
 def add_num_songs(youtube, num):
     r = []
-    with open('list' + sep + 'song_list.txt', encoding = 'utf-8') as File:
+    with open('Data' + sep + 'song_list.txt', encoding = 'utf-8') as File:
         r = File.read().split('\n')
         while '' in r:
             r.remove('')
@@ -120,7 +120,7 @@ def add_num_songs(youtube, num):
             add_song(youtube, choice)
             r.remove(choice)
         
-    with open('list' + sep + 'song_list.txt', 'w', encoding = 'utf-8') as File:
+    with open('Data' + sep + 'song_list.txt', 'w', encoding = 'utf-8') as File:
         for line in r:
             File.write(line + '\n')
 
@@ -137,3 +137,5 @@ def add_to_song_list(num):
 def delete_from_song_list(num):
     youtube = init()
     delete_num_songs(youtube, num)
+
+
