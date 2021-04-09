@@ -1,16 +1,11 @@
 from fbchat import Client
 from fbchat.models import *
 
-from calc_total import *
-from models import *
-from yt.song_list_func import *
+from _order_func import *
+from _simple_func import *
 
 import logging
-import shelve
 import json
-
-import os
-from getpass import getpass
 
 #logging
 logging.basicConfig(level = logging.INFO, format = '%(asctime)s:%(levelname)s:%(name)s: %(message)s')
@@ -19,25 +14,22 @@ logging.disable(logging.INFO)
 with open('sep.txt', encoding = 'utf-8') as file:
     sep = file.read()
 
+with open('Data' + sep + 'pic.json', encoding = 'utf-8') as js:
+    pic = json.load(js)
+
+block_list = ['3051843494915681']
+
 #subclass a bot
 class Kavic_Bot(Client):
 
-    order_open = False
-    now_shop = []
-
-    #shelf to store data
-    pc = shelve.open('shelf' + sep + 'pic_commands')
-    fg = shelve.open('shelf' + sep + 'forbidden_groups')
-    hp = shelve.open('shelf' + sep + 'help')
-
-    
     ###onMessage function
     def onMessage(self, author_id, message_object, thread_id, thread_type, **kwargs):
         '''
         self.markAsDelivered(thread_id, message_object.uid)
         self.markAsRead(thread_id)
         '''
-
+        global pic
+        
         #shorten these for convenience
         M = message_object.text
         tid = thread_id
@@ -46,7 +38,7 @@ class Kavic_Bot(Client):
         ###if the message is not empty and was sent in a forbidden group###
         ###if nothing wrong, judge the message###
         
-        if M != None and (tid not in self.fg.keys()) and (author_id not in self.fg.keys()) :
+        if M != None and tid not in block_list and author_id not in block_list:
             
             M = M.lower()
 
@@ -57,7 +49,8 @@ class Kavic_Bot(Client):
 
             if M == '歌單' or M == 'song list':
                 self.send(Message('https://www.youtube.com/playlist?list=PLQu61FekieSStFTy3f3YIEvBy7xo2Yqho'), tid, ttp)
-
+            '''
+            #will interrupt program
             if M.startswith('song list ') and only_for_admin(self.uid, author_id):
                 if len(M.split()) > 3:
                     num = int(M.split()[3])
@@ -71,119 +64,121 @@ class Kavic_Bot(Client):
                     delete_from_song_list(num)
                 elif choice == 'add':
                     add_to_song_list(num)
-            
+            '''
             ###help message
-            if M.startswith('-h') or M.startswith('help'):
-                logging.debug('help received')
-
+            if M == '-h' or M == 'help':
                 #if there's something behind 'help', send something
-                if len(M.split()) > 1:
-                    print('hi')
-                    self.sendLocalFiles('Source' + sep + self.hp[M.split()[1]], None, tid, ttp) 
-                    
-                else:
-                    with open('README.txt', mode = 'r', encoding = 'utf-8') as File:
-                        r_help = File.read()
-                        self.send(Message(r_help), tid, ttp)
-                    
-                    
+                with open('README.txt', mode = 'r', encoding = 'utf-8') as File:
+                    r_help = File.read()
+                    self.send(Message(r_help), tid, ttp)
+                                        
             ###class sheet
             if M.startswith('課表'):
-                class_sheet(M, self, tid, ttp)
+                if len(M.split()) > 1:
+                    wkday = int(M.split()[1]) - 1
+                else:
+                    wkday = dt.weekday(dt.now())
+            
+                self.send(Message('\n\n'.join(class_sheet(wkday))), tid, ttp)
+                    
+                if wkday >= 5:
+                    self.sendLocalFiles('Data' + sep + 'pic' + sep + 'no.png', None, tid, ttp)
                     
             ###send specific pics    
-            if M in self.pc.keys():
+            if M in pic:
                 try:
-                    self.sendLocalFiles('Source' + sep + self.pc[M], None, tid, ttp)
+                    self.sendLocalFiles('Data' + sep + 'pic' + sep + pic[M], None, tid, ttp)
                 except:
                     print('pic not found, it\'s ok maybe')
             
             ###洗頻
             if M == '洗頻攻擊' and only_for_admin(self.uid, author_id):
-                s = ''
+                text = ''
                 for i in range(1, 100):
-                    s += u'這是洗頻攻擊\n\n∑(っ°Д °;)っ\n\n'
+                    text += '這是洗頻攻擊\n\n∑(っ°Д °;)っ\n\n'
 
                 for i in range(1, 10):
-                    self.send(Message(s), tid, ttp)
+                    self.send(Message(text), tid, ttp)
                         
-                self.sendLocalFiles('Source' + sep + self.pc[M], None, tid, ttp)
+                self.sendLocalFiles('Data' + sep + 'pic' + sep + pic[M], None, tid, ttp)
 
 #---------------------------order---------------------------           
             ###點餐
             if M.startswith('o '):
                 
+                try:
+                    order_data = load_order_data()
+                except:
+                    #can't find order_data, create a new data json
+                    dump_order_data({'customers' : {}, 'products' : {}, 'shops' : [], 'order_open' : False})
+                    order_data = load_order_data()
+                        
                 if only_for_admin(self.uid, author_id):
 
                     command = M.split()[1]
                     
                     if command == 'open':
-                        #remove last record
-                        try:
-                            os.remove('list' + sep + 'record_list.txt')
-                        except:
-                            print('list has been removed')
-                            
-                        #order is open, collect shop name
-                        self.order_open = True
+                                  
                         shop_name = M.split(' ', 2)[2]
-
+                                  
                         #send order information
-                        self.send(Message(u'現正訂購 : ' + shop_name), tid, ttp)
-                        self.sendLocalFiles('Source' + sep + 'shop' + sep + self.pc[shop_name], Message('品項:'), tid, ttp)
-                        self.send(Message('點餐格式 : o <品名+細項> <數量> <價錢>'), tid, ttp)
+                        if shop_name in pic['shop']:
+                            self.send(Message('現正訂購 : ' + shop_name), tid, ttp)
+                            self.sendLocalFiles('Data' + sep + 'shop' + sep + pic['shop'][shop_name], Message('品項:'), tid, ttp)
+                            self.send(Message('點餐格式 : o <品名+細項> <數量> <價錢>'), tid, ttp)
+                        else:
+                            self.send(Message('沒這家店ㄋㄟ'), tid, ttp)
+                        #remove last json data
+                        if order_data['order_open'] == False:
+                            order_data = {'customers' : {}, 'products' : {}, 'shops' : [], 'order_open' : True}
+                            #check if order_data has been cleared
 
                         #add shop
-                        self.now_shop.append(shop_name)
+                        order_data['shops'].append(shop_name)
+                        
+                        #dump order data
+                        dump_order_data(order_data)
                          
                     elif command == 'close':
-                        if self.order_open:
+                        if order_data['order_open'] == True:
                             #choose which type to calc
-                            if len(self.now_shop) > 1:
-                                calc_food_and_drink()
-                            else:
-                                calc_only_one_shop()
-
-                            self.send(Message(u'關閉點餐...'), tid, ttp)
-                            self.now_shop.clear()
-                            self.order_open = False
+                            self.send(Message('= 關閉點餐... ='), tid, ttp)
+                                
+                            order_data['order_open'] = False
+                            dump_order_data(order_data)
+                                                        
                         else:
-                            print('can\'t close, not open yet.')
-                            
-                    elif command == 'check':
-                        try:
-                            with open('list' + sep + 'who_buy_what_list.txt', encoding = 'utf-8') as wbwl:
-                                lread = wbwl.read()
-                                self.send(Message(lread), tid, ttp)
-                        except:
-                            print('something wrong when opening the file "who_buy_what_list.txt"')
-                            
-                           
-                    elif command == 'relist':
-                        who_buy_what_list()
-                    
+                            print('Can\'t close, not open yet.')
+                    elif command == 'show':
+                        print(json.dumps(order_data, indent = 4))
+                        
+                    elif command == 'list':
+                        self.send(Message('\n'.join(send_list(M.split()[2]))), tid, ttp)
+#=============================================================================
                 elif M.split()[1] == 'help':
                         self.send(Message(u'點餐格式 : o <品名+細項> <數量> <價錢>'), tid, ttp)
                 
-                elif self.order_open:
+                elif order_data['order_open']:
                     #order is open, receive order
-                    order_something(M, self, tid, ttp, author_id)
+                    for text in order_something(M, buyer = (self.fetchUserInfo(author_id))[author_id].first_name):
+                        self.send(Message(text), tid, ttp)
 
                 #if order not open
-                elif not self.order_open:
-                    self.send(Message(u'還沒開訂 哥'), tid, ttp)
+                elif not order_data['order_open']:
+                    self.send(Message('還沒開訂 哥'), tid, ttp)
                 else:
-                    self.send(Message(u'輸入錯誤喔:('), tid, ttp)
+                    self.send(Message('輸入錯誤喔:('), tid, ttp)
 
             #send menu pic
             if M.startswith('菜單') or M.startswith('menu'):
-                if self.order_open:
-                    self.send(Message(u'現正訂購:'), tid, ttp)
+                order_data = load_order_data()
+                if order_data['order_open']:
+                    self.send(Message('= 現正訂購 ='), tid, ttp)
                 
-                    for shop in self.now_shop:
-                        self.sendLocalFiles('Source' + sep + 'shop' + sep + self.pc[shop], Message(shop), tid, ttp)
+                    for shop in order_data['shops']:
+                        self.sendLocalFiles('Data' + sep + 'shop' + sep + pic['shop'][shop], Message(shop), tid, ttp)
                 else:
-                    self.send(Message('not opennnnnnn'), tid, ttp)
+                    self.send(Message('Not opennnnnnN.'), tid, ttp)
 #---------------------------order---------------------------
                 
             ###system commands, only admin can use these 
@@ -191,55 +186,45 @@ class Kavic_Bot(Client):
 
                 #update shelf
                 if M == 'update':
-
-                    self.pc.close()
-                    self.fg.close()
-                    self.hp.close()
-
-                    self.pc = shelve.open('shelf' + sep + 'pic_commands')
-                    self.fg = shelve.open('shelf' + sep + 'forbidden_groups')
-                    self.hp = shelve.open('shelf' + sep +'help')
-                    
+                    with open('Data' + sep + 'pic.json', encoding = 'utf-8') as js:
+                        pic = json.load(js)
+                        
                     print('updated successful')
-                
+                    
+                if M == 'block':
+                    block_list.append(tid)
+                    print('{} has been blocked.'.format(tid))
+                if M == 'unblock':
+                    block_list.remove(tid)
+                    print('{} has been unblocked.'.format(tid))
                 #stop listening
                 if M == 'leave':
-                    self.sendLocalFiles('Source' + sep + 'leaving.jpg', Message("I'm leaving..."), tid, ttp)
+                    self.sendLocalFiles('Data' + sep + 'pic' + sep + 'leaving.jpg', Message("= I'm leaving... ="), tid, ttp)
                     self.stopListening()
                     
-        #for 歐鎮源
-        #if author_id == '100042346155061':
-            #self.sendLocalFiles('Source' + sep + 'asshole.jpg', thread_id=thread_id, thread_type=thread_type)
                 
 #-----------------------------------------------------------------------
-                
+           
 #initialize cookies
 cookies = {}
 try:
     # Load the session cookies
-    with open('personal_data' + sep + 'session.json', 'r') as f:
+    with open('Data' + sep + 'personal_data' + sep + 'session.json', 'r') as f:
         cookies = json.load(f)
 except:
     # If it fails, never mind, we'll just login again
-    pass
+    print('Can\'t load sessioin.json.')
 
 #connect bot
-with open('personal_data' + sep + 'email') as Email,\
-     open('personal_data' + sep + 'password') as Password:
-    email = Email.read()
-    password = Password.read()
+with open('Data' + sep + 'personal_data' + sep + 'facebook.json') as js:
+    facebook = json.load(js)
 
-client = Kavic_Bot(email, password, session_cookies=cookies)
+client = Kavic_Bot(facebook['email'], facebook['password'], session_cookies = cookies)
 print('----STARTING SUCCEED----')
 client.listen()
 
 
 # Save the session again
-with open('personal_data' + sep + 'session.json', 'w') as f:
+with open('Data' + sep + 'personal_data' + sep + 'session.json', 'w') as f:
     json.dump(client.getSession(), f)
 
-#close all shelve obj
-client.pc.close()
-client.fg.close()
-client.hp.close()
-    
