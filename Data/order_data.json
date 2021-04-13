@@ -1,1 +1,161 @@
-{"customers": {}, "products": {}, "shops": ["\u5433\u5bb6\u7d05\u8336\u51b0"], "order_open": false}
+{
+    "customers": {
+        "鎮源": {
+            "code": 1,
+            "products": {
+                "派森末茶微糖微冰大杯": {
+                    "num": 1,
+                    "cost": 65
+                },
+                "冷露歐蕾微糖去冰+白玉（中杯）": {
+                    "num": 1,
+                    "cost": 50
+                },
+                "白玉歐蕾半糖去冰大杯": {
+                    "num": 1,
+                    "cost": 60
+                },
+                "春芽冷露+白玉無糖溫的大杯": {
+                    "num": 1,
+                    "cost": 40
+                }
+            },
+            "has_paid": true,
+            "personal_total": 215
+        },
+        "Peggy": {
+            "code": 2,
+            "products": {
+                "冷露歐蕾微糖去冰+白玉（中杯）": {
+                    "num": 1,
+                    "cost": 50
+                }
+            },
+            "has_paid": false,
+            "personal_total": 50
+        },
+        "柏甫": {
+            "code": 3,
+            "products": {
+                "白玉歐蕾無糖微冰大杯": {
+                    "num": 1,
+                    "cost": 60
+                }
+            },
+            "has_paid": true,
+            "personal_total": 60
+        },
+        "力維": {
+            "code": 4,
+            "products": {
+                "冷露歐雷微糖去冰m": {
+                    "num": 1,
+                    "cost": 40
+                }
+            },
+            "has_paid": false,
+            "personal_total": 40
+        },
+        "宜潔": {
+            "code": 5,
+            "products": {
+                "太妃紅茶微糖去冰大杯": {
+                    "num": 1,
+                    "cost": 35
+                }
+            },
+            "has_paid": false,
+            "personal_total": 35
+        },
+        "振余": {
+            "code": 6,
+            "products": {
+                "雪藏紅茶微糖去冰m": {
+                    "num": 1,
+                    "cost": 45
+                }
+            },
+            "has_paid": false,
+            "personal_total": 45
+        },
+        "育宏": {
+            "code": 7,
+            "products": {
+                "冷露歐蕾微微大杯": {
+                    "num": 1,
+                    "cost": 50
+                }
+            },
+            "has_paid": true,
+            "personal_total": 50
+        },
+        "星豪": {
+            "code": 8,
+            "products": {
+                "白玉歐蕾微微大杯": {
+                    "num": 2,
+                    "cost": 120
+                }
+            },
+            "has_paid": true,
+            "personal_total": 120
+        },
+        "Rex": {
+            "code": 9,
+            "products": {
+                "白玉歐蕾微微大杯": {
+                    "num": 1,
+                    "cost": 60
+                }
+            },
+            "has_paid": false,
+            "personal_total": 60
+        }
+    },
+    "products": {
+        "派森末茶微糖微冰大杯": {
+            "num": 1,
+            "cost": 65
+        },
+        "冷露歐蕾微糖去冰+白玉（中杯）": {
+            "num": 2,
+            "cost": 100
+        },
+        "白玉歐蕾無糖微冰大杯": {
+            "num": 1,
+            "cost": 60
+        },
+        "白玉歐蕾半糖去冰大杯": {
+            "num": 1,
+            "cost": 60
+        },
+        "冷露歐蕾微糖去冰m": {
+            "num": 1,
+            "cost": 40
+        },
+        "太妃紅茶微糖去冰大杯": {
+            "num": 1,
+            "cost": 35
+        },
+        "雪藏紅茶微糖去冰m": {
+            "num": 1,
+            "cost": 45
+        },
+        "冷露歐蕾微微大杯": {
+            "num": 1,
+            "cost": 50
+        },
+        "白玉歐蕾微微大杯": {
+            "num": 3,
+            "cost": 180
+        },
+        "春芽冷露+白玉無糖溫的大杯": {
+            "num": 1,
+            "cost": 40
+        }
+    },
+    "shops": [
+        "可不可"
+    ],
+    "order_open": false
+}

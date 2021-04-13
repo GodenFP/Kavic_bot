@@ -138,4 +138,52 @@ def delete_from_song_list(num):
     youtube = init()
     delete_num_songs(youtube, num)
 
+    
+def song_options(M):
+    '''
+    Add songs to song_list,
+    Delete songs from song_list,
+    or just search songs.
+    Return a list of texts to be sent.
+    '''
+    send_text = []
+    with open('Data' + sep + 'song_list.txt', 'r') as file:
+        song_list = file.read().split('\n')
+            
+    num = len(song_list)
+    for title in M[M.find(' ') + 1:].split(','):
+        if title.startswith('https://www.youtube.com/'):
+            if 'list' in title:
+                send_text.append('這是list喔:(')
+                return send_text
+            if title in song_list:
+                send_text.append('U人點過囉!')
+                return send_text
+            song_list.append(title)
+        elif title != '':
+            url = get_url_by_title(title)
+            if url in song_list:
+                send_text.append('U人點過囉!')
+                return send_text
+            
+            if M.startswith('-a ') or M.startswith('add '):
+                song_list.append(url)
+            elif M.startswith('-s ') or M.startswith('search '):
+                send_text.append('https://youtu.be/' + url)
+            elif M.startswith('-d ') or M.startswith('delete '):
+                song_list.remove(url)
+
+    with open('Data' + sep + 'song_list.txt', 'w', encoding = 'utf-8') as file:
+        for line in song_list:
+            if line != '':
+                file.write(line + '\n')
+                        
+    #num of sent songs or deleted songs
+    if M.startswith('-a ') or M.startswith('add '):
+        send_text.append('You點了 ' + str(len(song_list) - num) + u' 首song(s) :)')
+    if M.startswith('-d ') or M.startswith('delete '):
+        send_text.append('You刪了 ' + str(num - len(song_list)) + u' 首song(s) :(')
+        
+    #retun text list to send
+    return send_text
 

@@ -1,10 +1,33 @@
-from _simple_func import load_order_data
+import json
 
 with open('sep.txt', encoding = 'utf-8') as file:
     sep = file.read()
-    
+
+
+def load_order_data():
+    #try:
+        with open('Data' + sep + 'order_data.json', encoding = 'utf-8') as js:
+            return json.load(js)      
+    #except:
+        print('Can\'t load order_data.')
+
+def dump_order_data(data):
+    try:
+        with open('Data' + sep + 'order_data.json', 'w', encoding = 'utf-8') as js:
+            json.dump(data, js, ensure_ascii = False, indent = 4)
+            
+    except:
+        print('Can\'t dump order_data.')
+
 def order_list(more_than_one_shop = False):
-    '''list products for ordering. '''
+    '''
+    Make a list of products for ordering.
+    If more_than_one_shop is True,
+    this func will judge the length of product's name.
+    Greater than 6, the product will be classified as 'drink',
+    otherwise, food(not accurate)
+    Return a list of texts to send.
+    '''
     send_text = []
     total = 0
     order_data = load_order_data()
@@ -46,7 +69,11 @@ def order_list(more_than_one_shop = False):
     return send_text
 
 def check_list():
-
+    '''
+    Make a list of who ordered, ordered what,
+    and how much the personal total is.
+    Return a list of texts to send.
+    '''
     send_text = []
     order_data = load_order_data()
     
@@ -59,27 +86,15 @@ def check_list():
                                                   str(order_data['customers'][customer]['products'][product]['cost'])
                                                   )
                             )
-
+        send_text.append('共' + str(order_data['customers'][customer]['personal_total']) + '元')
         send_text.append('=' * 6)
     return send_text
-'''
-def who_order_drink():
-    
-    with open('list' + sep + 'order_list.txt', 'w', encoding = 'utf-8') as lfo:
-        for name in name_product.keys():
-            for product in name_product[name].keys():
-                if len(product) > 6:
-                    nl.write(' '.join([product, str(name_product[name][product][0] * 5) + '元', '\n-----\n']))
-                    
-def who_order_food():
 
-    with open('list' + sep + 'order_list.txt', 'w', encoding = 'utf-8') as ol:
-        for name in name_product.keys():
-            for product in name_product[name].keys():
-                if len(product) <= 6:
-                    nl.write(' '.join([key, str(name_product[name][product][0] * 5) + '元', '\n-----\n']))
-'''
 def payment_list():
+    '''
+    Make a list of who has not paid.
+    Return a list of texts to send.
+    '''
     send_text = []
     order_data = load_order_data()
 
@@ -90,6 +105,54 @@ def payment_list():
             send_text.append('{} {}元'.format(customer, str(order_data['customers'][customer]['personal_total'])))
         
     return send_text
-#-------------------------------------------------
+        
+def order_something(M, buyer):                 
+    #order is open, customer start to order
 
+    send_text = []
+    order_data = load_order_data()
+    
+    try:
+        #get information from the message
+        product, num, cost = M.split()[1:]
+        try:
+            if buyer not in order_data['customers']:
+                order_data['customers'][buyer] = {'code' : len(order_data['customers']) + 1,
+                                                  'products' : {product : {'num' : int(num), 'cost' : int(cost)}},
+                                                  'has_paid' : False,
+                                                  'personal_total' : int(cost)}
+            elif product not in order_data['customers'][buyer]['products']:
+                order_data['customers'][buyer]['products'][product] = {'num' : int(num), 'cost' : int(cost)}
+                order_data['customers'][buyer]['personal_total'] += int(cost)
+            else:
+                order_data['customers'][buyer]['products'][product]['num'] += int(num)
+                order_data['customers'][buyer]['products'][product]['cost'] += int(cost)
+                order_data['customers'][buyer]['personal_total'] += int(cost)
 
+            if product not in order_data['products']:
+                order_data['products'][product] = {'num' : int(num), 'cost' : int(cost)}
+            else:
+                order_data['products'][product]['num'] += int(num)
+                order_data['products'][product]['cost'] += int(cost)
+        except:
+            print('Something wrong when dumping customer and product data.')
+            
+        print(buyer, 'check!')
+            
+        send_text.append('點餐成功:)')
+        dump_order_data(order_data)
+    except:
+        send_text.append('輸入錯誤喔割:(')
+        
+    return send_text
+
+def send_list(which_list_to_send):
+    try:
+        if which_list_to_send == 'check':
+            return check_list()
+        elif which_list_to_send == 'order':
+            return order_list()
+        elif which_list_to_send =='payment':
+            return payment_list()
+    except:
+        print('Something wrong when trying to send {}_list.'.format(which_list_to_send))

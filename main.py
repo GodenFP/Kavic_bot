@@ -3,6 +3,7 @@ from fbchat.models import *
 
 from _order_func import *
 from _simple_func import *
+from _song_list_func import song_options
 
 import logging
 import json
@@ -28,7 +29,7 @@ class Kavic_Bot(Client):
         self.markAsDelivered(thread_id, message_object.uid)
         self.markAsRead(thread_id)
         '''
-        global pic
+        global pic, block_list
         
         #shorten these for convenience
         M = message_object.text
@@ -38,7 +39,7 @@ class Kavic_Bot(Client):
         ###if the message is not empty and was sent in a forbidden group###
         ###if nothing wrong, judge the message###
         
-        if M != None and tid not in block_list and author_id not in block_list:
+        if M != None and ((tid not in block_list and author_id not in block_list) or only_for_admin(self.uid, author_id)):
             
             M = M.lower()
 
@@ -89,7 +90,7 @@ class Kavic_Bot(Client):
                 try:
                     self.sendLocalFiles('Data' + sep + 'pic' + sep + pic[M], None, tid, ttp)
                 except:
-                    print('pic not found, it\'s ok maybe')
+                    print('Pic not found, it\'s ok maybe.')
             
             ###洗頻
             if M == '洗頻攻擊' and only_for_admin(self.uid, author_id):
@@ -127,11 +128,12 @@ class Kavic_Bot(Client):
                             self.sendLocalFiles('Data' + sep + 'shop' + sep + pic['shop'][shop_name], Message('品項:'), tid, ttp)
                             self.send(Message('點餐格式 : o <品名+細項> <數量> <價錢>'), tid, ttp)
                         else:
-                            self.send(Message('沒這家店ㄋㄟ'), tid, ttp)
+                            self.send(Message('= 沒這家店ㄋㄟ ='), tid, ttp)
+                            
                         #remove last json data
                         if order_data['order_open'] == False:
                             order_data = {'customers' : {}, 'products' : {}, 'shops' : [], 'order_open' : True}
-                            #check if order_data has been cleared
+                            
 
                         #add shop
                         order_data['shops'].append(shop_name)
@@ -141,20 +143,24 @@ class Kavic_Bot(Client):
                          
                     elif command == 'close':
                         if order_data['order_open'] == True:
-                            #choose which type to calc
-                            self.send(Message('= 關閉點餐... ='), tid, ttp)
-                                
+                            
                             order_data['order_open'] = False
                             dump_order_data(order_data)
-                                                        
+                                                                                  
+                            self.send(Message('= 關閉點餐... ='), tid, ttp)
+                                  
                         else:
                             print('Can\'t close, not open yet.')
+                            
                     elif command == 'show':
-                        print(json.dumps(order_data, indent = 4))
+                        #print order data to check
+                        print(json.dumps(order_data, indent = 4, ensure_ascii = False))
                         
                     elif command == 'list':
                         self.send(Message('\n'.join(send_list(M.split()[2]))), tid, ttp)
+                        
 #=============================================================================
+                        
                 elif M.split()[1] == 'help':
                         self.send(Message(u'點餐格式 : o <品名+細項> <數量> <價錢>'), tid, ttp)
                 
@@ -184,19 +190,21 @@ class Kavic_Bot(Client):
             ###system commands, only admin can use these 
             if only_for_admin(self.uid, author_id):
 
-                #update shelf
+                #update pic data json
                 if M == 'update':
                     with open('Data' + sep + 'pic.json', encoding = 'utf-8') as js:
                         pic = json.load(js)
                         
                     print('updated successful')
-                    
+
+                #block thread(block until this robot shut down or unblock)
                 if M == 'block':
                     block_list.append(tid)
                     print('{} has been blocked.'.format(tid))
                 if M == 'unblock':
                     block_list.remove(tid)
                     print('{} has been unblocked.'.format(tid))
+                    
                 #stop listening
                 if M == 'leave':
                     self.sendLocalFiles('Data' + sep + 'pic' + sep + 'leaving.jpg', Message("= I'm leaving... ="), tid, ttp)
