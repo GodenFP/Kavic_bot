@@ -1,6 +1,7 @@
-from _order_func import payment_list, load_order_data, dump_order_data
+# coding=utf-8
+from _order_func import *
 
-with open('sep.txt', encoding = 'utf-8') as file:
+with open('sep.txt', encoding='utf-8') as file:
     sep = file.read()
     
 command = ''
@@ -23,5 +24,11 @@ while command != 'quit':
         print('=' * 10)
         print('\n'.join(payment_list()))
         print('=' * 10)
+    elif command.startswith('list'):
+        List = order_send_list(command.split()[1])
+        if List != '':
+            print('\n'.join(List))
+        else:
+            print('missing list!')
     elif command != 'quit':
         print('input error!')
