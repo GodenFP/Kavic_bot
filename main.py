@@ -111,7 +111,7 @@ class Kavic_Bot(Client):
                     order_data = load_order_data()
                 except:
                     #can't find order_data, create a new data json
-                    dump_order_data({'customers' : {}, 'products' : {}, 'shops' : [], 'order_open' : False})
+                    dump_order_data({'customers' : {}, 'shops' : [], 'order_open' : False, 'max_code' : 0})
                     order_data = load_order_data()
                         
                 if only_for_admin(self.uid, author_id):
@@ -132,11 +132,12 @@ class Kavic_Bot(Client):
                             
                         #remove last json data
                         if order_data['order_open'] == False:
-                            order_data = {'customers' : {}, 'products' : {}, 'shops' : [], 'order_open' : True}
+                            order_data = {'customers' : {}, 'shops' : [], 'order_open' : True, 'max_code' : 0}
                             
 
                         #add shop
-                        order_data['shops'].append(shop_name)
+                        if shop_name not in order_data['shops']:
+                            order_data['shops'].append(shop_name)
                         
                         #dump order data
                         dump_order_data(order_data)
@@ -151,7 +152,7 @@ class Kavic_Bot(Client):
                                   
                         else:
                             print('Can\'t close, not open yet.')
-                            
+                    
                     elif command == 'show':
                         #print order data to check
                         print(json.dumps(order_data, indent = 4, ensure_ascii = False))
@@ -224,9 +225,15 @@ except:
     print('Can\'t load sessioin.json.')
 
 #connect bot
-with open('Data' + sep + 'personal_data' + sep + 'facebook.json') as js:
-    facebook = json.load(js)
-
+try:
+    with open('Data' + sep + 'personal_data' + sep + 'facebook.json') as js:
+        facebook = json.load(js)
+except:
+    with open('Data' + sep + 'personal_data' + sep + 'facebook.json', 'w') as js:
+        facebook = {'email' : input('Enter your email:'),
+                   'password' : input('Enter your password:')}
+        json.dump(facebook, js)
+        
 client = Kavic_Bot(facebook['email'], facebook['password'], session_cookies = cookies)
 print('----STARTING SUCCEED----')
 client.listen()
