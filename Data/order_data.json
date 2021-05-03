@@ -1,1 +1,8 @@
-{"customers": {}, "products": {}, "shops": ["\u5433\u5bb6\u7d05\u8336\u51b0"], "order_open": false}
+{
+    "customers": {},
+    "shops": [
+        "白巷子"
+    ],
+    "order_open": true,
+    "max_code": 0
+}
