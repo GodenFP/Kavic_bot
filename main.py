@@ -92,7 +92,7 @@ class KavicBot(Client):
             if message in pic:
                 try:
                     self.sendLocalFiles('Data' + sep + 'pic' + sep + pic[message], None, tid, ttp)
-                except:
+                except FileNotFoundError:
                     print('Pic not found, it\'s ok maybe.')
             
             # 洗頻
@@ -112,7 +112,7 @@ class KavicBot(Client):
                 
                 try:
                     order_data = load_order_data()
-                except:
+                except FileNotFoundError:
                     # can't find order_data, create a new data json
                     dump_order_data({'customers': {}, 'shops': [], 'order_open': False, 'max_code': 0})
                     order_data = load_order_data()
@@ -163,13 +163,13 @@ class KavicBot(Client):
                         
                     elif command == 'list':
                         self.send(Message('\n'.join(order_send_list(message.split()[2]))), tid, ttp)
-                    # TODO: create remove command
                     elif command == 'rm':
                         self.send(Message('\n'.join(order_remove_item(tuple(message.split()[2:])))), tid, ttp)
-                    # TODO: create search command
                     elif command == 'search':
                         self.send(Message('\n'.join(order_search_something(message.split()[2]))), tid, ttp)
-                        
+                    else:
+                        print('= Type wrong =')
+                    # TODO: add pay func
 # =============================================================================
                         
                 elif message.split()[1] == 'help':
@@ -239,7 +239,7 @@ except:
 try:
     with open('Data' + sep + 'personal_data' + sep + 'facebook.json') as js:
         facebook = json.load(js)
-except:
+except FileNotFoundError:
     with open('Data' + sep + 'personal_data' + sep + 'facebook.json', 'w') as js:
         facebook = {'email': input('Enter your email:'), 'password': input('Enter your password:')}
         json.dump(facebook, js)
