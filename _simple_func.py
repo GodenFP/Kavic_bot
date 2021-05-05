@@ -1,5 +1,5 @@
 import json
-sep = '\\'
+sep = '/'
 # =====================
 
 
@@ -20,6 +20,6 @@ def curriculum(day_num):
     if day_num < 5:
         for cls_num in range(0, len(course_data[day_num]['courses'])):
             send_text.append(course_data[day_num]['courses'][cls_num].center(20))
-            if cls_num == 4:
+            if cls_num == 3:
                 send_text.append('- - - 午休 - - - '.center(20))
     return send_text

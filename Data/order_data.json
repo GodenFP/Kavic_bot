@@ -1,8 +1,320 @@
 {
-    "customers": {},
+    "customers": {
+        "百泰": {
+            "code": 1,
+            "products": {
+                "小辣": {
+                    "num": 1,
+                    "cost": 70
+                },
+                "米血": {
+                    "num": 1,
+                    "cost": 20
+                }
+            },
+            "has_paid": true,
+            "personal_total": 90
+        },
+        "Rex": {
+            "code": 2,
+            "products": {
+                "小辣": {
+                    "num": 1,
+                    "cost": 70
+                },
+                "魔王小雞丁": {
+                    "num": 1,
+                    "cost": 30
+                },
+                "米血": {
+                    "num": 1,
+                    "cost": 20
+                }
+            },
+            "has_paid": true,
+            "personal_total": 120
+        },
+        "鎮源": {
+            "code": 3,
+            "products": {
+                "小辣": {
+                    "num": 1,
+                    "cost": 70
+                }
+            },
+            "has_paid": true,
+            "personal_total": 70
+        },
+        "柏任": {
+            "code": 4,
+            "products": {
+                "小辣": {
+                    "num": 1,
+                    "cost": 70
+                }
+            },
+            "has_paid": true,
+            "personal_total": 70
+        },
+        "力維": {
+            "code": 5,
+            "products": {
+                "雞丁": {
+                    "num": 2,
+                    "cost": 60
+                },
+                "米血": {
+                    "num": 1,
+                    "cost": 20
+                },
+                "地瓜薯": {
+                    "num": 1,
+                    "cost": 20
+                },
+                "中辣": {
+                    "num": 1,
+                    "cost": 70
+                }
+            },
+            "has_paid": true,
+            "personal_total": 170
+        },
+        "育宏": {
+            "code": 6,
+            "products": {
+                "米血": {
+                    "num": 1,
+                    "cost": 20
+                },
+                "粉圓奶茶l微微": {
+                    "num": 1,
+                    "cost": 45
+                }
+            },
+            "has_paid": true,
+            "personal_total": 65
+        },
+        "丞右": {
+            "code": 7,
+            "products": {
+                "地瓜薯": {
+                    "num": 1,
+                    "cost": 20
+                },
+                "黃金脆薯": {
+                    "num": 1,
+                    "cost": 20
+                },
+                "魔王小雞丁": {
+                    "num": 1,
+                    "cost": 30
+                }
+            },
+            "has_paid": true,
+            "personal_total": 70
+        },
+        "星豪": {
+            "code": 9,
+            "products": {
+                "小辣": {
+                    "num": 1,
+                    "cost": 70
+                },
+                "黑糖珍珠奶茶m微微": {
+                    "num": 1,
+                    "cost": 50
+                }
+            },
+            "has_paid": true,
+            "personal_total": 120
+        },
+        "Sin-Yi": {
+            "code": 10,
+            "products": {
+                "魔王小雞丁": {
+                    "num": 1,
+                    "cost": 30
+                },
+                "黃金脆薯": {
+                    "num": 1,
+                    "cost": 20
+                }
+            },
+            "has_paid": false,
+            "personal_total": 50
+        },
+        "建宇": {
+            "code": 11,
+            "products": {
+                "黃金脆薯": {
+                    "num": 1,
+                    "cost": 20
+                },
+                "手採金萱烏龍l無微": {
+                    "num": 1,
+                    "cost": 25
+                }
+            },
+            "has_paid": true,
+            "personal_total": 45
+        },
+        "倬宇": {
+            "code": 12,
+            "products": {
+                "地瓜薯條": {
+                    "num": 1,
+                    "cost": 20
+                },
+                "春芽紅茶l無去": {
+                    "num": 1,
+                    "cost": 25
+                },
+                "不辣": {
+                    "num": 1,
+                    "cost": 70
+                }
+            },
+            "has_paid": true,
+            "personal_total": 115
+        },
+        "緗緹": {
+            "code": 13,
+            "products": {
+                "中辣": {
+                    "num": 1,
+                    "cost": 70
+                }
+            },
+            "has_paid": false,
+            "personal_total": 70
+        },
+        "妍君": {
+            "code": 14,
+            "products": {
+                "中辣": {
+                    "num": 1,
+                    "cost": 70
+                }
+            },
+            "has_paid": true,
+            "personal_total": 70
+        },
+        "圓真": {
+            "code": 15,
+            "products": {
+                "原味": {
+                    "num": 1,
+                    "cost": 70
+                }
+            },
+            "has_paid": true,
+            "personal_total": 70
+        },
+        "可彤": {
+            "code": 16,
+            "products": {
+                "奶蓋紅加黑糖波霸l半微": {
+                    "num": 1,
+                    "cost": 55
+                }
+            },
+            "has_paid": true,
+            "personal_total": 55
+        },
+        "芳菁": {
+            "code": 17,
+            "products": {
+                "冬瓜檸檬l微": {
+                    "num": 1,
+                    "cost": 50
+                },
+                "茉香綠茶l半": {
+                    "num": 1,
+                    "cost": 25
+                },
+                "不辣": {
+                    "num": 1,
+                    "cost": 70
+                }
+            },
+            "has_paid": true,
+            "personal_total": 145
+        },
+        "筱喻": {
+            "code": 18,
+            "products": {
+                "奶蓋綠茶加波霸l微去": {
+                    "num": 1,
+                    "cost": 50
+                }
+            },
+            "has_paid": false,
+            "personal_total": 50
+        },
+        "宇申": {
+            "code": 20,
+            "products": {
+                "波霸紅茶拿鐵m微去": {
+                    "num": 1,
+                    "cost": 45
+                }
+            },
+            "has_paid": true,
+            "personal_total": 45
+        },
+        "佳蓁": {
+            "code": 21,
+            "products": {
+                "波波黑糖奶蓋紅m微去": {
+                    "num": 1,
+                    "cost": 40
+                },
+                "魔王小雞丁": {
+                    "num": 1,
+                    "cost": 30
+                }
+            },
+            "has_paid": true,
+            "personal_total": 70
+        },
+        "偉豪": {
+            "code": 22,
+            "products": {
+                "魔王雞肉串": {
+                    "num": 1,
+                    "cost": 20
+                }
+            },
+            "has_paid": true,
+            "personal_total": 20
+        },
+        "承泰": {
+            "code": 23,
+            "products": {
+                "雞肉串": {
+                    "num": 1,
+                    "cost": 20
+                }
+            },
+            "has_paid": true,
+            "personal_total": 20
+        },
+        "Mina": {
+            "code": 24,
+            "products": {
+                "奶蓋綠茶加波霸l微去": {
+                    "num": 1,
+                    "cost": 50
+                }
+            },
+            "has_paid": true,
+            "personal_total": 50
+        }
+    },
     "shops": [
-        "白巷子"
+        "白巷子",
+        "魔王雞排"
     ],
-    "order_open": true,
-    "max_code": 0
+    "order_open": false,
+    "max_code": 24
 }
