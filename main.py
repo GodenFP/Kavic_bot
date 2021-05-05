@@ -148,7 +148,9 @@ class KavicBot(Client):
                          
                     elif command == 'close':
                         if order_data['order_open']:
-                            
+                            # TODO: fix this bug
+                            for customer in order_data['customers']:
+                                order_data['customers'][customer]['need_to_pay'] = order_data['customers'][customer]['personal_total']
                             order_data['order_open'] = False
                             dump_order_data(order_data)
                                                                                   
@@ -167,9 +169,13 @@ class KavicBot(Client):
                         self.send(Message('\n'.join(order_remove_item(tuple(message.split()[2:])))), tid, ttp)
                     elif command == 'search':
                         self.send(Message('\n'.join(order_search_something(message.split()[2]))), tid, ttp)
+                    # TODO: pay func has many things to improve
+                    elif command == 'pay':
+                        self.send(Message('\n'.join(order_pay_money(tuple(message.split()[2:])))), tid, ttp)
+                    # TODO: create modify func 
                     else:
                         print('= Type wrong =')
-                    # TODO: add pay func
+                    
 # =============================================================================
                         
                 elif message.split()[1] == 'help':

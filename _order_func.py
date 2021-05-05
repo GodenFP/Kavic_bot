@@ -50,7 +50,8 @@ def order_list():
     product_list = list(products.keys())
     more_than_one_shop = (len(load_order_data()['shops']) > 1)
 
-    product_list.sort()
+    product_list.sort(key=lambda product: len(product))
+    print(product_list)
     for product in product_list:
         if more_than_one_shop and len(product) >= 6:
             send_text.append('共 {} 元\n= = = = ='.format(total))
@@ -88,18 +89,22 @@ def check_list():
     return send_text
 
 
-def payment_list():
+def payment_list(display_all=False):
     """Make a list of who has not paid.
     Return a list of texts to send.
     """
     send_text = []
     order_data = load_order_data()
-
-    send_text.append('尚 未 付 款')
-    send_text.append('- - - - -')
-    
+    if not display_all:
+        send_text.append('尚 未 付 款')
+        send_text.append('- - - - -')
+    #TODO: fix payment bug, get it better
     for customer in order_data['customers']:
-        if not order_data['customers'][customer]['has_paid']:
+        if not display_all and order_data['customers'][customer]['need_to_pay'] != 0:
+            send_text.append('{} {}  {}元'.format(str(order_data['customers'][customer]['code']),
+                                                 customer,
+                                                 str(order_data['customers'][customer]['need_to_pay'])))
+        elif display_all:
             send_text.append('{} {}  {}元'.format(str(order_data['customers'][customer]['code']),
                                                  customer,
                                                  str(order_data['customers'][customer]['personal_total'])))
@@ -126,7 +131,7 @@ def order_something(message, buyer):
                 order_data['max_code'] += 1
                 order_data['customers'][buyer] = {'code': order_data['max_code'],
                                                   'products': {product: {'num': num, 'cost': cost}},
-                                                  'has_paid': False,
+                                                  'need_to_pay': -1
                                                   'personal_total': cost}
             elif product not in order_data['customers'][buyer]['products']:
                 order_data['customers'][buyer]['products'][product] = {'num': num, 'cost': cost}
@@ -216,4 +221,35 @@ def order_search_something(something):
     return send_text
 
 
-# print('\n'.join(order_list()))
+# TODO: inspect this F**KIng thing
+def order_pay_money(who_pay_how_much):
+    send_text = []
+    try:
+        who, how_much = who_pay_how_much
+        if how_much != 'all' or not how_much.isdigit():
+            send_text.append('= Type Wrong! =')
+            return send_text
+    except ValueError:
+        who = who_pay_how_much[0]
+        how_much = 'all'
+        
+    order_data = load_order_data()
+    for customer in order_data['customers']:
+        if who == str(order_data['customers'][customer]['code']):
+            if how_much == 'all':
+                order_data['customers'][customer]['need_to_pay'] = 0
+                send_text.append("= {} has paid all! :) =".format(customer))
+            elif how_much.isdigit():
+                order_data['customers'][customer]['need_to_pay'] -= int(how_much)
+                if order_data['customers'][customer]['need_to_pay'] == 0:
+                    send_text.append("= {} has paid all! :) =".format(customer))
+                else:
+                    send_text.append("= {} has paid {}, still has {} to pay. :) =".format(customer, how_much,
+                                                                                          order_data['customers'][customer]['need_to_pay']))
+            break
+        
+    dump_order_data(order_data)
+    return send_text
+
+# print('\n'.join(order_pay_money(input().split()[2])))
+# print('\n'.join(payment_list()))
