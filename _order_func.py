@@ -50,7 +50,7 @@ def order_list():
     product_list = list(products.keys())
     more_than_one_shop = (len(load_order_data()['shops']) > 1)
 
-    product_list.sort(key=lambda product: len(product))
+    product_list.sort(key=lambda product_in_product_list: len(product_in_product_list))
     print(product_list)
     for product in product_list:
         if more_than_one_shop and len(product) >= 6:
@@ -98,16 +98,17 @@ def payment_list(display_all=False):
     if not display_all:
         send_text.append('尚 未 付 款')
         send_text.append('- - - - -')
-    #TODO: fix payment bug, get it better
+    # TODO: fix payment bug, get it better
     for customer in order_data['customers']:
-        if not display_all and order_data['customers'][customer]['need_to_pay'] != 0:
-            send_text.append('{} {}  {}元'.format(str(order_data['customers'][customer]['code']),
-                                                 customer,
-                                                 str(order_data['customers'][customer]['need_to_pay'])))
-        elif display_all:
+        if display_all:
             send_text.append('{} {}  {}元'.format(str(order_data['customers'][customer]['code']),
                                                  customer,
                                                  str(order_data['customers'][customer]['personal_total'])))
+        elif order_data['customers'][customer]['money_has_paid'] != order_data['customers'][customer]['personal_total']:
+            send_text.append('{} {}  {}元'.format(str(order_data['customers'][customer]['code']),
+                                                 customer,
+                                                 str(order_data['customers'][customer]['personal_total']
+                                                     - order_data['customers'][customer]['money_has_paid'])))
         
     return send_text
 
@@ -131,7 +132,7 @@ def order_something(message, buyer):
                 order_data['max_code'] += 1
                 order_data['customers'][buyer] = {'code': order_data['max_code'],
                                                   'products': {product: {'num': num, 'cost': cost}},
-                                                  'need_to_pay': -1
+                                                  'money_has_paid': 0,
                                                   'personal_total': cost}
             elif product not in order_data['customers'][buyer]['products']:
                 order_data['customers'][buyer]['products'][product] = {'num': num, 'cost': cost}
@@ -196,6 +197,35 @@ def order_remove_item(remove_who_and_what):
     return send_text
 
 
+def order_modify_item(modify_who_and_what_with_what):
+    send_text = []
+    order_data = load_order_data()
+    try:
+        modify_who, modify_what, with_what = modify_who_and_what_with_what
+    except ValueError:
+        send_text.append("= 輸入錯誤 =")
+        return send_text
+
+    for customer in tuple(order_data['customers'].keys()):
+        if modify_who == 'all' or modify_who == str(order_data['customers'][customer]['code']):
+            for product in tuple(order_data['customers'][customer]['products'].keys()):
+                if modify_what in product:
+                    if with_what not in order_data['customers'][customer]['products']:
+                        order_data['customers'][customer]['products'][with_what] = \
+                            order_data['customers'][customer]['products'].pop(product)
+                    else:
+                        original_info = order_data['customers'][customer]['products'].pop(product)
+                        order_data['customers'][customer]['products'][with_what]['num'] += original_info['num']
+                        order_data['customers'][customer]['products'][with_what]['cost'] += original_info['cost']
+                    send_text.append('= 已將 {} 的 {} 更改為 {} ='.format(customer, product, with_what))
+            if modify_who != 'all':
+                break
+    dump_order_data(order_data)
+    if len(send_text) == 0:
+        send_text.append('= 404 not found :( =')
+    return send_text
+
+
 def order_search_something(something):
     order_data = load_order_data()
     send_text = []
@@ -222,11 +252,12 @@ def order_search_something(something):
 
 
 # TODO: inspect this F**KIng thing
-def order_pay_money(who_pay_how_much):
+def order_charge(who_pay_how_much):
     send_text = []
     try:
         who, how_much = who_pay_how_much
-        if how_much != 'all' or not how_much.isdigit():
+        if how_much != 'all' and not how_much.isdigit():
+            print(how_much)
             send_text.append('= Type Wrong! =')
             return send_text
     except ValueError:
@@ -236,16 +267,20 @@ def order_pay_money(who_pay_how_much):
     order_data = load_order_data()
     for customer in order_data['customers']:
         if who == str(order_data['customers'][customer]['code']):
+            personal_total = order_data['customers'][customer]['personal_total']
+            money_has_paid = order_data['customers'][customer]['money_has_paid']
             if how_much == 'all':
-                order_data['customers'][customer]['need_to_pay'] = 0
-                send_text.append("= {} has paid all! :) =".format(customer))
+                money_has_paid = personal_total
+                send_text.append("= {} 已付清! :) =".format(customer))
             elif how_much.isdigit():
-                order_data['customers'][customer]['need_to_pay'] -= int(how_much)
-                if order_data['customers'][customer]['need_to_pay'] == 0:
-                    send_text.append("= {} has paid all! :) =".format(customer))
+                money_has_paid += int(how_much)
+                if money_has_paid == personal_total:
+                    send_text.append("= {} 已付清! :) =".format(customer))
                 else:
-                    send_text.append("= {} has paid {}, still has {} to pay. :) =".format(customer, how_much,
-                                                                                          order_data['customers'][customer]['need_to_pay']))
+                    send_text.append("= {} 付了 {} 元, 還有 {} 元尚未付清 :) =".format(
+                        customer, how_much, str(personal_total - money_has_paid)))
+            order_data['customers'][customer]['personal_total'] = personal_total
+            order_data['customers'][customer]['money_has_paid'] = money_has_paid
             break
         
     dump_order_data(order_data)

@@ -148,14 +148,9 @@ class KavicBot(Client):
                          
                     elif command == 'close':
                         if order_data['order_open']:
-                            # TODO: fix this bug
-                            for customer in order_data['customers']:
-                                order_data['customers'][customer]['need_to_pay'] = order_data['customers'][customer]['personal_total']
                             order_data['order_open'] = False
                             dump_order_data(order_data)
-                                                                                  
                             self.send(Message('= 關閉點餐... ='), tid, ttp)
-                                  
                         else:
                             print('Can\'t close, not open yet.')
                     
@@ -165,19 +160,19 @@ class KavicBot(Client):
                         
                     elif command == 'list':
                         self.send(Message('\n'.join(order_send_list(message.split()[2]))), tid, ttp)
-                    elif command == 'rm':
+                    elif command == 'rm' or command == 'remove':
                         self.send(Message('\n'.join(order_remove_item(tuple(message.split()[2:])))), tid, ttp)
                     elif command == 'search':
                         self.send(Message('\n'.join(order_search_something(message.split()[2]))), tid, ttp)
-                    # TODO: pay func has many things to improve
-                    elif command == 'pay':
-                        self.send(Message('\n'.join(order_pay_money(tuple(message.split()[2:])))), tid, ttp)
-                    # TODO: create modify func 
+                    # charge: o c charge_who charge_how_much
+                    elif command == 'c' or command == 'charge':
+                        self.send(Message('\n'.join(order_charge(tuple(message.split()[2:])))), tid, ttp)
+                    # modify: o md md_who md_what with_what
+                    elif command == 'md' or command == 'modify':
+                        self.send(Message('\n'.join(order_modify_item(tuple(message.split()[2:])))), tid, ttp)
                     else:
                         print('= Type wrong =')
-                    
 # =============================================================================
-                        
                 elif message.split()[1] == 'help':
                     self.send(Message(u'= 點餐格式 : o <品名+細項> <數量> <價錢> ='), tid, ttp)
                 
@@ -185,7 +180,6 @@ class KavicBot(Client):
                     # order is open, receive order
                     for text in order_something(message, buyer=(self.fetchUserInfo(author_id))[author_id].first_name):
                         self.send(Message(text), tid, ttp)
-
                 # if order not open
                 elif not order_data['order_open']:
                     self.send(Message('= 還沒開訂 哥 ='), tid, ttp)
@@ -203,10 +197,8 @@ class KavicBot(Client):
                 else:
                     self.send(Message('= Not opennnnnnN. ='), tid, ttp)
 # ---------------------------order---------------------------
-                
             # system commands, only admin can use these
             if author_id in admin_list:
-
                 # update pic data json
                 if message == 'update':
                     with open('Data' + sep + 'pic.json', encoding='utf-8') as js_file:
@@ -215,12 +207,12 @@ class KavicBot(Client):
                     print('updated successful')
 
                 # block thread(block until this robot shut down or unblock)
-                if message == 'block':
-                    block_list.append(tid)
-                    print('{} has been blocked.'.format(tid))
-                if message == 'unblock':
-                    block_list.remove(tid)
-                    print('{} has been unblocked.'.format(tid))
+                if message.startswith('block '):
+                    block_list.append(message.split()[1])
+                    print('{} has been blocked.'.format(message.split()[1]))
+                if message.startswith('unblock '):
+                    block_list.remove(message.split()[1])
+                    print('{} has been unblocked.'.format(message.split()[1]))
                     
                 # stop listening
                 if message == 'leave':
