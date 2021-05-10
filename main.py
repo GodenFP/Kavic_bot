@@ -109,14 +109,7 @@ class KavicBot(Client):
 # ---------------------------order---------------------------
             # 點餐
             if message.startswith('o '):
-                
-                try:
-                    order_data = load_order_data()
-                except FileNotFoundError:
-                    # can't find order_data, create a new data json
-                    dump_order_data({'customers': {}, 'shops': [], 'order_open': False, 'max_code': 0})
-                    order_data = load_order_data()
-
+                order_data = load_order_data()
                 # admin command
                 if author_id in admin_list:
 

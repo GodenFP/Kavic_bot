@@ -10,6 +10,10 @@ def load_order_data():
         print('Can\'t load order_data.')
     except FileNotFoundError:
         print('Can\'t find order_data when loading.')
+        # can't find order_data, create a new data json
+        dump_order_data({'customers': {}, 'shops': [], 'order_open': False, 'max_code': 0})
+        with open('Data' + sep + 'order_data.json', encoding='utf-8') as js:
+            return json.load(js)
 
 
 def dump_order_data(data):
