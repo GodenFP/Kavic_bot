@@ -3,33 +3,18 @@
         "鎮源": {
             "code": 1,
             "products": {
-                "小雞丁": {
-                    "num": 2,
-                    "cost": 60
-                },
-                "雞排": {
-                    "num": 2,
-                    "cost": 140
+                "奶茶半糖少冰l": {
+                    "num": 32,
+                    "cost": 1440
                 }
             },
-            "money_has_paid": 90,
-            "personal_total": 230
-        },
-        "偉豪": {
-            "code": 2,
-            "products": {
-                "小辣": {
-                    "num": 1,
-                    "cost": 60
-                }
-            },
-            "money_has_paid": 60,
-            "personal_total": 60
+            "money_has_paid": 0,
+            "personal_total": 1440
         }
     },
     "shops": [
-        "大口香雞排"
+        "白巷子"
     ],
     "order_open": false,
-    "max_code": 2
+    "max_code": 1
 }

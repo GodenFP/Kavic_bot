@@ -6,15 +6,18 @@ def load_order_data():
     try:
         with open('Data' + sep + 'order_data.json', encoding='utf-8') as js:
             return json.load(js)      
-    except:
+    except json.decoder.JSONDecodeError:
         print('Can\'t load order_data.')
+    except FileNotFoundError:
+        print('Can\'t find order_data when loading.')
 
 
 def dump_order_data(data):
     try:
         with open('Data' + sep + 'order_data.json', 'w', encoding='utf-8') as js:
             json.dump(data, js, ensure_ascii=False, indent=4)
-            
+    except FileNotFoundError:
+        print('Can\'t find order_data when dumping.')
     except:
         print('Can\'t dump order_data.')
 
@@ -77,13 +80,14 @@ def check_list():
     send_text.append('=' * 6)
     for customer in order_data['customers']:
         send_text.append(customer + ' ' + str(order_data['customers'][customer]['code']))
-        
+        personal_total = order_data['customers'][customer]['personal_total']
+        fee = (personal_total // 200 + 1) * 5
         for product in order_data['customers'][customer]['products']:
-            send_text.append('{} x {} {}元'.format(product,
-                                                  str(order_data['customers'][customer]['products'][product]['num']),
-                                                  str(order_data['customers'][customer]['products'][product]['cost'])
-                                                  ))
-        send_text.append('共' + str(order_data['customers'][customer]['personal_total']) + '元')
+            send_text.append('{} x{} {}元'.format(product,
+                                                 str(order_data['customers'][customer]['products'][product]['num']),
+                                                 str(order_data['customers'][customer]['products'][product]['cost'])))
+        send_text.append('服務費: {}元'.format(fee))
+        send_text.append('共' + str(personal_total + fee) + '元')
         send_text.append('=' * 6)
         
     return send_text
@@ -100,16 +104,17 @@ def payment_list(display_all=False):
         send_text.append('- - - - -')
     # TODO: fix payment bug, get it better
     for customer in order_data['customers']:
+        personal_total = order_data['customers'][customer]['personal_total']
+        money_has_paid = order_data['customers'][customer]['money_has_paid']
+        fee = (personal_total // 200 + 1) * 5
         if display_all:
             send_text.append('{} {}  {}元'.format(str(order_data['customers'][customer]['code']),
                                                  customer,
-                                                 str(order_data['customers'][customer]['personal_total'])))
-        elif order_data['customers'][customer]['money_has_paid'] != order_data['customers'][customer]['personal_total']:
+                                                 str(personal_total + fee)))
+        elif money_has_paid != (personal_total + fee):
             send_text.append('{} {}  {}元'.format(str(order_data['customers'][customer]['code']),
                                                  customer,
-                                                 str(order_data['customers'][customer]['personal_total']
-                                                     - order_data['customers'][customer]['money_has_paid'])))
-        
+                                                 str(personal_total + fee - money_has_paid)))
     return send_text
 
 
@@ -126,26 +131,22 @@ def order_something(message, buyer):
         cost = int(cost)
         if num == 0 or cost == 0:
             raise
-        
-        try:
-            if buyer not in order_data['customers']:
-                order_data['max_code'] += 1
-                order_data['customers'][buyer] = {'code': order_data['max_code'],
-                                                  'products': {product: {'num': num, 'cost': cost}},
-                                                  'money_has_paid': 0,
-                                                  'personal_total': cost}
-            elif product not in order_data['customers'][buyer]['products']:
-                order_data['customers'][buyer]['products'][product] = {'num': num, 'cost': cost}
-                order_data['customers'][buyer]['personal_total'] += cost
-            else:
-                order_data['customers'][buyer]['products'][product]['num'] += num
-                order_data['customers'][buyer]['products'][product]['cost'] += cost
-                order_data['customers'][buyer]['personal_total'] += cost
-        except:
-            print('Something wrong when dumping customer and product data.')
-            
+
+        if buyer not in order_data['customers']:
+            order_data['max_code'] += 1
+            order_data['customers'][buyer] = {'code': order_data['max_code'],
+                                              'products': {product: {'num': num, 'cost': cost}},
+                                              'money_has_paid': 0,
+                                              'personal_total': cost}
+        elif product not in order_data['customers'][buyer]['products']:
+            order_data['customers'][buyer]['products'][product] = {'num': num, 'cost': cost}
+            order_data['customers'][buyer]['personal_total'] += cost
+        else:
+            order_data['customers'][buyer]['products'][product]['num'] += num
+            order_data['customers'][buyer]['products'][product]['cost'] += cost
+            order_data['customers'][buyer]['personal_total'] += cost
+
         print(buyer, 'check!')
-            
         send_text.append('= 點餐成功:) =')
         dump_order_data(order_data)
     except:
@@ -253,6 +254,9 @@ def order_search_something(something):
 
 # TODO: inspect this F**KIng thing
 def order_charge(who_pay_how_much):
+    """
+    charge: o c who how_much
+    """
     send_text = []
     try:
         who, how_much = who_pay_how_much
@@ -286,5 +290,16 @@ def order_charge(who_pay_how_much):
     dump_order_data(order_data)
     return send_text
 
+
+# TODO: is this really needy?
+def order_reset_has_paid(code):
+    order_data = load_order_data()
+    send_text = []
+    for customer in order_data['customers']:
+        if code == 'all' or int(code) == order_data['customers'][customer]['code']:
+            order_data['customers'][customer]['money_has_paid'] = 0
+            send_text.append('= {} has been reset! ='.format(customer))
+            break
+    return send_text
 # print('\n'.join(order_pay_money(input().split()[2])))
 # print('\n'.join(payment_list()))

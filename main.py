@@ -131,9 +131,11 @@ class KavicBot(Client):
                             self.send(Message('現正訂購 : ' + shop_name), tid, ttp)
                             self.sendLocalFiles('Data' + sep + 'shop' + sep + pic['shop'][shop_name],
                                                 Message('品項:'), tid, ttp)
-                            self.send(Message('點餐格式 : o <品名+細項> <數量> <價錢>'), tid, ttp)
+                            self.send(Message('= 200元內酌收5元服務費 =\n= 超過則每200元加收5元 ='), tid, ttp)
+                            self.send(Message('= 200元內酌收5元服務費 =\n= 超過則每200元加收5元 ='), tid, ttp)
+
                         else:
-                            self.send(Message('= 沒這家店ㄋㄟ ='), tid, ttp)
+                            self.send(Message('= 沒這家店ㄟ ='), tid, ttp)
                             
                         # remove last json data
                         if not order_data['order_open']:
@@ -157,11 +159,13 @@ class KavicBot(Client):
                     elif command == 'show':
                         # print order data to check
                         print(json.dumps(order_data, indent=4, ensure_ascii=False))
-                        
+                    # list: o list which_list
                     elif command == 'list':
                         self.send(Message('\n'.join(order_send_list(message.split()[2]))), tid, ttp)
+                    # remove: o rm who what
                     elif command == 'rm' or command == 'remove':
                         self.send(Message('\n'.join(order_remove_item(tuple(message.split()[2:])))), tid, ttp)
+                    # search: o search (product_name or code)
                     elif command == 'search':
                         self.send(Message('\n'.join(order_search_something(message.split()[2]))), tid, ttp)
                     # charge: o c charge_who charge_how_much
@@ -170,6 +174,8 @@ class KavicBot(Client):
                     # modify: o md md_who md_what with_what
                     elif command == 'md' or command == 'modify':
                         self.send(Message('\n'.join(order_modify_item(tuple(message.split()[2:])))), tid, ttp)
+                    elif command == 'reset':
+                        self.send(Message('\n'.join(order_reset_has_paid(message.split()[2]))), tid, ttp)
                     else:
                         print('= Type wrong =')
 # =============================================================================
@@ -191,9 +197,9 @@ class KavicBot(Client):
                 order_data = load_order_data()
                 if order_data['order_open']:
                     self.send(Message('= 現正訂購 ='), tid, ttp)
-                
                     for shop in order_data['shops']:
                         self.sendLocalFiles('Data' + sep + 'shop' + sep + pic['shop'][shop], Message(shop), tid, ttp)
+                    self.send(Message('= 200元內酌收5元服務費 =\n= 超過則每200元加收5元 ='), tid, ttp)
                 else:
                     self.send(Message('= Not opennnnnnN. ='), tid, ttp)
 # ---------------------------order---------------------------
