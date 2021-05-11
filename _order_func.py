@@ -22,8 +22,6 @@ def dump_order_data(data):
             json.dump(data, js, ensure_ascii=False, indent=4)
     except FileNotFoundError:
         print('Can\'t find order_data when dumping.')
-    except:
-        print('Can\'t dump order_data.')
 
 
 def count_product():
@@ -106,7 +104,6 @@ def payment_list(display_all=False):
     if not display_all:
         send_text.append('尚 未 付 款')
         send_text.append('- - - - -')
-    # TODO: fix payment bug, get it better
     for customer in order_data['customers']:
         personal_total = order_data['customers'][customer]['personal_total']
         money_has_paid = order_data['customers'][customer]['money_has_paid']
@@ -134,7 +131,8 @@ def order_something(message, buyer):
         num = int(num)
         cost = int(cost)
         if num == 0 or cost == 0:
-            raise
+            send_text.append('= 數量or金額輸入錯誤 :( =')
+            return send_text
 
         if buyer not in order_data['customers']:
             order_data['max_code'] += 1
@@ -153,24 +151,28 @@ def order_something(message, buyer):
         print(buyer, 'check!')
         send_text.append('= 點餐成功:) =')
         dump_order_data(order_data)
-    except:
+    except ValueError:
         send_text.append('= 輸入錯誤喔割:( =')
+    except KeyError:
+        print('json key打錯啦割')
         
     return send_text
 
 
 def order_send_list(which_list_to_send):
-    if which_list_to_send == 'check':
+    if which_list_to_send in ('check', 'c'):
         return check_list()
-    elif which_list_to_send == 'order':
+    elif which_list_to_send in ('order', 'o'):
         return order_list()
-    elif which_list_to_send == 'payment':
+    elif which_list_to_send in ('payment', 'p'):
         return payment_list()
+    elif which_list_to_send in ('payment all', 'pa'):
+        return payment_list(True)
     else:
         print('Type wrong list to send!')
 
 
-# TODO: add docstring
+# TODO: add docstring and use list
 def order_remove_item(remove_who_and_what):
     send_text = []
     order_data = load_order_data()

@@ -116,28 +116,28 @@ class KavicBot(Client):
                     command = message.split()[1]
                     
                     if command == 'open':
-                                  
-                        shop_name = message.split(' ', 2)[2]
-                                  
-                        # send order information
-                        if shop_name in pic['shop']:
-                            self.send(Message('現正訂購 : ' + shop_name), tid, ttp)
-                            self.sendLocalFiles('Data' + sep + 'shop' + sep + pic['shop'][shop_name],
-                                                Message('品項:'), tid, ttp)
-                            self.send(Message('= 200元內酌收5元服務費 =\n= 超過則每200元加收5元 ='), tid, ttp)
-                            self.send(Message('= 200元內酌收5元服務費 =\n= 超過則每200元加收5元 ='), tid, ttp)
+                        try:
+                            shop_name = message.split(' ', 2)[2]
+                            # send order information
+                            if shop_name in pic['shop']:
+                                self.send(Message('現正訂購 : ' + shop_name), tid, ttp)
+                                self.sendLocalFiles('Data' + sep + 'shop' + sep + pic['shop'][shop_name],
+                                                    Message('品項:'), tid, ttp)
+                                self.send(Message('= 200元內酌收5元服務費 =\n= 超過則每200元加收5元 ='), tid, ttp)
+                                self.send(Message('= 200元內酌收5元服務費 =\n= 超過則每200元加收5元 ='), tid, ttp)
 
-                        else:
-                            self.send(Message('= 沒這家店ㄟ ='), tid, ttp)
-                            
-                        # remove last json data
-                        if not order_data['order_open']:
-                            order_data = {'customers': {}, 'shops': [], 'order_open': True, 'max_code': 0}
+                            else:
+                                self.send(Message('= 沒這家店ㄟ ='), tid, ttp)
 
-                        # add shop
-                        if shop_name not in order_data['shops']:
-                            order_data['shops'].append(shop_name)
-                        
+                            # remove last json data
+                            if not order_data['order_open']:
+                                order_data = {'customers': {}, 'shops': [], 'order_open': True, 'max_code': 0}
+
+                            # add shop
+                            if shop_name not in order_data['shops']:
+                                order_data['shops'].append(shop_name)
+                        except IndexError:
+                            order_data['order_open'] = True
                         # dump order data
                         dump_order_data(order_data)
                          
@@ -153,13 +153,13 @@ class KavicBot(Client):
                         # print order data to check
                         print(json.dumps(order_data, indent=4, ensure_ascii=False))
                     # list: o list which_list
-                    elif command == 'list':
+                    elif command == 'l' or command == 'list':
                         self.send(Message('\n'.join(order_send_list(message.split()[2]))), tid, ttp)
                     # remove: o rm who what
                     elif command == 'rm' or command == 'remove':
                         self.send(Message('\n'.join(order_remove_item(tuple(message.split()[2:])))), tid, ttp)
                     # search: o search (product_name or code)
-                    elif command == 'search':
+                    elif command == 's' or command == 'search':
                         self.send(Message('\n'.join(order_search_something(message.split()[2]))), tid, ttp)
                     # charge: o c charge_who charge_how_much
                     elif command == 'c' or command == 'charge':
@@ -207,11 +207,15 @@ class KavicBot(Client):
 
                 # block thread(block until this robot shut down or unblock)
                 if message.startswith('block '):
-                    block_list.append(message.split()[1])
-                    print('{} has been blocked.'.format(message.split()[1]))
+                    mention_list = message_object.mentions
+                    for mention in mention_list:
+                        block_list.append(mention.thread_id)
+                    print('{} has been blocked.'.format(mention.thread_id))
                 if message.startswith('unblock '):
-                    block_list.remove(message.split()[1])
-                    print('{} has been unblocked.'.format(message.split()[1]))
+                    mention_list = message_object.mentions
+                    for mention in mention_list:
+                        block_list.remove(mention.thread_id)
+                    print('{} has been unblocked.'.format(mention.thread_id))
                     
                 # stop listening
                 if message == 'leave':
@@ -228,7 +232,7 @@ try:
     # Load the session cookies
     with open('Data' + sep + 'personal_data' + sep + 'session.json', 'r') as f:
         cookies = json.load(f)
-except:
+except FileNotFoundError:
     # If it fails, never mind, we'll just login again
     print('Can\'t load sessioin.json.')
 
