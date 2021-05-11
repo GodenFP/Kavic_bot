@@ -273,29 +273,29 @@ def order_charge(who_pay_how_much):
     except ValueError:
         who = who_pay_how_much[0]
         how_much = 'all'
-        
+
     order_data = load_order_data()
     for customer in order_data['customers']:
         if who == str(order_data['customers'][customer]['code']):
             personal_total = order_data['customers'][customer]['personal_total']
             money_has_paid = order_data['customers'][customer]['money_has_paid']
+            fee = (personal_total // 200 + 1) * 5
             if how_much == 'all':
-                money_has_paid = personal_total
+                money_has_paid = personal_total + fee
                 send_text.append("= {} 已付清! :) =".format(customer))
             elif how_much.isdigit():
                 money_has_paid += int(how_much)
-                if money_has_paid == personal_total:
+                if money_has_paid == personal_total + fee:
                     send_text.append("= {} 已付清! :) =".format(customer))
                 else:
                     send_text.append("= {} 付了 {} 元, 還有 {} 元尚未付清 :) =".format(
-                        customer, how_much, str(personal_total - money_has_paid)))
+                        customer, how_much, str(personal_total + fee - money_has_paid)))
             order_data['customers'][customer]['personal_total'] = personal_total
             order_data['customers'][customer]['money_has_paid'] = money_has_paid
             break
-        
+
     dump_order_data(order_data)
     return send_text
-
 
 # TODO: is this really needy?
 def order_reset_has_paid(code):
