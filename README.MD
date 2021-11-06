@@ -28,5 +28,7 @@ o help : 查看點餐格式
 <<DANGEROUS>> 
 洗頻攻擊 #暫時封印:(
 ```
+點餐功能範例:
+
 <img src="Data/pic_1.png" width="217" height="220">
 <img src="Data/pic_2.png" width="378" height="400">
